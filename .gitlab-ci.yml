@@ -9,6 +9,9 @@ test:
   script:
     - export GRADLE_USER_HOME=$PWD/.gradle
     - ./gradlew assemble
+    # always report on lint errors to the build log
+    - sed -i -e 's,textReport .*,textReport true,' app/build.gradle
+    - ./gradlew lint
     - ./gradlew test || {
           for log in app/build/reports/*ests/*/*ml; do
               echo "read $log here:";

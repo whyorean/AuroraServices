@@ -25,8 +25,15 @@ android {
     }
 
     lintOptions {
-        // Do not abort build if lint finds errors
-        abortOnError false
+        checkReleaseBuilds false
+        abortOnError true
+
+        htmlReport true
+        xmlReport false
+        textReport false
+
+	// this is never going to be a real "app"
+	disable 'GoogleAppIndexingWarning'
     }
 
 }
