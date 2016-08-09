@@ -1,3 +1,13 @@
+/* gets the version name from the latest Git tag, stripping the leading v off */
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags', '--always'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim().substring(1)
+}
+
 repositories {
     jcenter()
 }
@@ -13,7 +23,7 @@ android {
         minSdkVersion 8
         targetSdkVersion 24
         versionCode 1050
-        versionName "0.1"
+        versionName getVersionName()
     }
 
     compileOptions {
@@ -25,8 +35,15 @@ android {
     }
 
     lintOptions {
-        // Do not abort build if lint finds errors
-        abortOnError false
+        checkReleaseBuilds false
+        abortOnError true
+
+        htmlReport true
+        xmlReport false
+        textReport false
+
+	// this is never going to be a real "app"
+	disable 'GoogleAppIndexingWarning'
     }
 
 }
