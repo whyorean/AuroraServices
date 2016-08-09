@@ -30,16 +30,22 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Locale;
+import java.util.HashSet;
 
 public class AccessProtectionHelper {
 
     Context context;
     PackageManager pm;
+    HashSet<String> whitelist;
 
     AccessProtectionHelper(Context context) {
+        this(context, ClientWhitelist.whitelist);
+    }
+
+    AccessProtectionHelper(Context context, HashSet<String> whitelist) {
         this.context = context;
         this.pm = context.getPackageManager();
+        this.whitelist = whitelist;
     }
 
     /**
@@ -67,15 +73,13 @@ public class AccessProtectionHelper {
         return isPackageAllowed(currentPkg);
     }
 
-    private boolean isPackageAllowed(String packageName) {
+    public boolean isPackageAllowed(String packageName) {
         Log.d(PrivilegedService.TAG, "Checking if package is allowed to access privileged extension: " + packageName);
 
         try {
             byte[] currentPackageCert = getPackageCertificate(packageName);
 
-            for (String whitelistHashString : ClientWhitelist.whitelist) {
-                whitelistHashString = whitelistHashString.replaceAll(":", "");
-                whitelistHashString = whitelistHashString.toLowerCase(Locale.US);
+            for (String whitelistHashString : whitelist) {
                 byte[] whitelistHash = hexStringToByteArray(whitelistHashString);
 
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
