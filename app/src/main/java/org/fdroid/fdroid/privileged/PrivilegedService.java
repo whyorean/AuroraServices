@@ -18,11 +18,14 @@ package org.fdroid.fdroid.privileged;
 
 import android.Manifest;
 import android.app.Service;
+import android.app.admin.DevicePolicyManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.IPackageDeleteObserver;
 import android.content.pm.IPackageInstallObserver;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -82,6 +85,11 @@ public class PrivilegedService extends Service {
     }
 
     private void deletePackageImpl(String packageName, int flags, final IPrivilegedCallback callback) {
+        if (isDeviceOwner(packageName)) {
+            Log.e(TAG, "Cannot delete " + packageName + ". This app is the device owner.");
+            return;
+        }
+
         // Internal callback from the system
         IPackageDeleteObserver.Stub deleteObserver = new IPackageDeleteObserver.Stub() {
             @Override
@@ -164,6 +172,22 @@ public class PrivilegedService extends Service {
             Log.e(TAG, "Android not compatible!", e);
             stopSelf();
         }
+    }
+
+    /**
+     * Checks if an app is the current device owner.
+     *
+     * @param packageName to check
+     * @return true if it is the device owner app
+     */
+    private boolean isDeviceOwner(String packageName) {
+        if (Build.VERSION.SDK_INT < 18) {
+            return false;
+        }
+
+        DevicePolicyManager manager =
+                (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        return manager.isDeviceOwnerApp(packageName);
     }
 
 }
