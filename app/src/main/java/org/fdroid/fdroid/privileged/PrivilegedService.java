@@ -34,10 +34,12 @@ import java.lang.reflect.Method;
  */
 public class PrivilegedService extends Service {
 
-    private static final String TAG = "PrivilegedService";
+    public static final String TAG = "PrivilegedExtension";
 
-    private Method mInstallMethod;
-    private Method mDeleteMethod;
+    private AccessProtectionHelper accessProtectionHelper;
+
+    private Method installMethod;
+    private Method deleteMethod;
 
     private boolean hasPrivilegedPermissionsImpl() {
         boolean hasInstallPermission =
@@ -52,7 +54,6 @@ public class PrivilegedService extends Service {
 
     private void installPackageImpl(Uri packageURI, int flags, String installerPackageName,
                                     final IPrivilegedCallback callback) {
-
         // Internal callback from the system
         IPackageInstallObserver.Stub installObserver = new IPackageInstallObserver.Stub() {
             @Override
@@ -68,7 +69,7 @@ public class PrivilegedService extends Service {
 
         // execute internal method
         try {
-            mInstallMethod.invoke(getPackageManager(), packageURI, installObserver,
+            installMethod.invoke(getPackageManager(), packageURI, installObserver,
                     flags, installerPackageName);
         } catch (Exception e) {
             Log.e(TAG, "Android not compatible!", e);
@@ -81,7 +82,6 @@ public class PrivilegedService extends Service {
     }
 
     private void deletePackageImpl(String packageName, int flags, final IPrivilegedCallback callback) {
-
         // Internal callback from the system
         IPackageDeleteObserver.Stub deleteObserver = new IPackageDeleteObserver.Stub() {
             @Override
@@ -97,7 +97,7 @@ public class PrivilegedService extends Service {
 
         // execute internal method
         try {
-            mDeleteMethod.invoke(getPackageManager(), packageName, deleteObserver, flags);
+            deleteMethod.invoke(getPackageManager(), packageName, deleteObserver, flags);
         } catch (Exception e) {
             Log.e(TAG, "Android not compatible!", e);
             try {
@@ -106,50 +106,60 @@ public class PrivilegedService extends Service {
                 Log.e(TAG, "RemoteException", e1);
             }
         }
-
     }
 
-    private final IPrivilegedService.Stub mBinder = new IPrivilegedService.Stub() {
+    private final IPrivilegedService.Stub binder = new IPrivilegedService.Stub() {
         @Override
         public boolean hasPrivilegedPermissions() {
-            return hasPrivilegedPermissionsImpl();
+            boolean callerIsAllowed = accessProtectionHelper.isCallerAllowed();
+            return callerIsAllowed && hasPrivilegedPermissionsImpl();
         }
 
         @Override
         public void installPackage(Uri packageURI, int flags, String installerPackageName,
                                    IPrivilegedCallback callback) {
+            if (!accessProtectionHelper.isCallerAllowed()) {
+                return;
+            }
+
             installPackageImpl(packageURI, flags, installerPackageName, callback);
         }
 
         @Override
         public void deletePackage(String packageName, int flags, IPrivilegedCallback callback) {
+            if (!accessProtectionHelper.isCallerAllowed()) {
+                return;
+            }
+
             deletePackageImpl(packageName, flags, callback);
         }
     };
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return binder;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
+        accessProtectionHelper = new AccessProtectionHelper(this);
+
         // get internal methods via reflection
         try {
             Class<?>[] installTypes = {
-                Uri.class, IPackageInstallObserver.class, int.class,
-                String.class,
+                    Uri.class, IPackageInstallObserver.class, int.class,
+                    String.class,
             };
             Class<?>[] deleteTypes = {
-                String.class, IPackageDeleteObserver.class,
-                int.class,
+                    String.class, IPackageDeleteObserver.class,
+                    int.class,
             };
 
             PackageManager pm = getPackageManager();
-            mInstallMethod = pm.getClass().getMethod("installPackage", installTypes);
-            mDeleteMethod = pm.getClass().getMethod("deletePackage", deleteTypes);
+            installMethod = pm.getClass().getMethod("installPackage", installTypes);
+            deleteMethod = pm.getClass().getMethod("deletePackage", deleteTypes);
         } catch (NoSuchMethodException e) {
             Log.e(TAG, "Android not compatible!", e);
             stopSelf();

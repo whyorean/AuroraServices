@@ -1,3 +1,6 @@
+apply plugin: 'com.android.application'
+apply plugin: 'checkstyle'
+
 /* gets the version name from the latest Git tag, stripping the leading v off */
 def getVersionName = { ->
     def stdout = new ByteArrayOutputStream()
@@ -12,8 +15,13 @@ repositories {
     jcenter()
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'checkstyle'
+dependencies {
+    testCompile 'junit:junit:4.12'
+
+    androidTestCompile 'com.android.support:support-annotations:24.1.1'
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test:rules:0.5'
+}
 
 android {
     compileSdkVersion 24
@@ -24,6 +32,7 @@ android {
         targetSdkVersion 24
         versionCode 1050
         versionName getVersionName()
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -42,8 +51,8 @@ android {
         xmlReport false
         textReport false
 
-	// this is never going to be a real "app"
-	disable 'GoogleAppIndexingWarning'
+        // this is never going to be a real "app"
+        disable 'GoogleAppIndexingWarning'
     }
 
 }

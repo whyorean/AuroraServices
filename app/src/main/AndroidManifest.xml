@@ -11,26 +11,18 @@
         android:name="android.permission.DELETE_PACKAGES"
         tools:ignore="ProtectedPermissions" />
 
-    <!--
-        Only apps signed with the same key can use this permission!
-        The permission is automatically granted independent of the install order
-        Never presented to the user due to the protectionLevel.
-     -->
-    <permission
-        android:name="org.fdroid.fdroid.privileged.USE_SERVICE"
-        android:protectionLevel="signature" />
-
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name">
+        android:label="@string/app_name"
+        tools:ignore="GoogleAppIndexingWarning">
 
         <service
             android:name=".PrivilegedService"
             android:enabled="true"
             android:exported="true"
-            android:permission="org.fdroid.fdroid.privileged.USE_SERVICE"
-            android:process=":fdroid_privileged">
+            android:process=":fdroid_privileged"
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="org.fdroid.fdroid.privileged.IPrivilegedService" />
             </intent-filter>
