@@ -29,6 +29,15 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
 
+    buildTypes {
+        all {
+            // Keep IPackageInstallObserver and IPackageDeleteObserver
+            minifyEnabled false
+            useProguard false
+            shrinkResources false
+        }
+    }
+
     lintOptions {
         checkReleaseBuilds false
         abortOnError true
