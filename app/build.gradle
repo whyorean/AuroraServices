@@ -65,6 +65,7 @@ android {
     applicationVariants.all { variant ->
         def name = variant.buildType.name
         def zipBase = file("${buildDir}/intermediates/updateZip${name.capitalize()}")
+        def zipWithFDroidBase = file("${buildDir}/intermediates/updateZipWithFDroid${name.capitalize()}")
 
         def apkToCopy
         variant.outputs.each { output ->
@@ -94,6 +95,48 @@ android {
             dependsOn copyApkTask, copyScriptTask
             from zipBase
             archiveName "${archivesBaseName}-${getVersionName()}-${name}.zip"
+        }
+
+        def getFDroidApkTask = project.tasks.create("getFDroidApk${name.capitalize()}") {
+            doLast {
+                def downloadDir = "${buildDir}/intermediates"
+                def f = new File("${downloadDir}/FDroid.apk")
+                if (!f.exists()) {
+                    def url = 'https://f-droid.org/FDroid.apk'
+                    println "Downloading ${url}"
+                    new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
+                }
+                def asc = new File("${downloadDir}/FDroid.apk.asc")
+                if (!asc.exists()) {
+                    def url = 'https://f-droid.org/FDroid.apk.asc'
+                    println "Downloading ${url}"
+                    new URL(url).withInputStream { i -> asc.withOutputStream { it << i } }
+                }
+                println "Verifying using ${asc}"
+                exec {
+                    def keyring = new File(project.rootDir, '/f-droid.org-signing-key.gpg')
+                    executable = 'gpg'
+                    args '--keyring', keyring, '--no-default-keyring', '--verify', asc
+                }
+            }
+        }
+
+        def copyUpdateZipDirTask = project.tasks.create("copyUpdateZipDir${name.capitalize()}", Copy) {
+            dependsOn copyApkTask, copyScriptTask
+            from zipBase
+            into zipWithFDroidBase
+        }
+
+        def copyFDroidApkTask = project.tasks.create("copyFDroidApk${name.capitalize()}", Copy) {
+            dependsOn getFDroidApkTask, copyUpdateZipDirTask
+            from "${buildDir}/intermediates/FDroid.apk"
+            into zipWithFDroidBase
+        }
+
+        def zipWithFDroidTask = project.tasks.create("updateZipWithFDroid${name.capitalize()}", Zip) {
+            dependsOn copyFDroidApkTask
+            from zipWithFDroidBase
+            archiveName "${archivesBaseName}WithFDroid-${getVersionName()}-${name}.zip"
         }
 
         project.tasks.build.dependsOn zipTask
