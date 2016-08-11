@@ -17,6 +17,7 @@ build.xml
 .gradle/
 build/
 gradle.properties
+signing.properties
 
 # Local configuration file (sdk path, etc)
 local.properties

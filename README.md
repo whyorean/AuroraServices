@@ -35,3 +35,10 @@ Build an "update.zip" to flash to a device to install just the Privileged Extens
 Build the standlone APK using:
 
     ./gradlew assembleRelease
+
+In order to have final, signed release versions that are ready for installing, a release signing key must be set up in _signing.properties_ with these contents:
+
+    key.store=/path/to/release-keystore.jks
+    key.store.password=mysecurestorepw
+    key.alias=release
+    key.alias.password=mysecurekeypw

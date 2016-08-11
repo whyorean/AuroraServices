@@ -62,6 +62,21 @@ android {
         disable 'GoogleAppIndexingWarning'
     }
 
+    File signFile = rootProject.file('signing.properties')
+    if (signFile.exists()) {
+        Properties properties = new Properties()
+        properties.load(new FileInputStream(signFile))
+        signingConfigs {
+            release {
+                storeFile rootProject.file(properties['key.store'])
+                storePassword properties['key.store.password']
+                keyAlias properties['key.alias']
+                keyPassword properties['key.alias.password']
+            }
+        }
+        buildTypes.release.signingConfig signingConfigs.release
+    }
+
     applicationVariants.all { variant ->
         def name = variant.buildType.name
         def zipBase = file("${buildDir}/intermediates/updateZip${name.capitalize()}")
