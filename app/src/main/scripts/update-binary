@@ -42,31 +42,30 @@ rm -f /system/app/FDroid*/*
 rm -f /system/priv-app/FDroid*
 rm -f /system/priv-app/FDroid*/*
 
-# if the system is < 4.4, a system app has to be in /system/app
-# if the system is >= 4.4, a privileged (new name for system) app has to be in /system/priv-app
-BUILD_RELEASE_VERSION="$(grep 'ro\.build\.version\.release' /system/build.prop)"
-VERSION="${BUILD_RELEASE_VERSION##*=}"
-MAJ=${VERSION%%.*}
-MIN=${VERSION#*.}
-MIN=${MIN//.*}
-
-if [ "${MAJ}${MIN}" -ge 44 ]
+BUILD_VERSION_SDK_INT="$(getprop ro.build.version.sdk)"
+if [ "${BUILD_VERSION_SDK_INT}" -ge 21 ]
 then
-  INSTDIR="/system/priv-app/${FPE_NAME}"
+  FPE_DIR="/system/priv-app/${FPE_NAME}"
+  mkdir ${FPE_DIR}
+  chmod 755 ${FPE_DIR}
+  FDROIDDIR="/system/app/${FDROID_NAME}"
+  mkdir ${FDROIDDIR}
+  chmod 755 ${FDROIDDIR}
+elif [ "${BUILD_VERSION_SDK_INT}" -ge 19 ]
+then
+  FPE_DIR="/system/priv-app"
+  FDROIDDIR="/system/app"
 else
-  INSTDIR="/system/app/${FPE_NAME}"
+  FPE_DIR="/system/app"
+  FDROIDDIR="/system/app"
 fi
-mkdir ${INSTDIR}
-chmod 755 ${INSTDIR}
-cp ${FPE} ${INSTDIR}
-chmod 644 ${INSTDIR}/${FPE}
+
+cp ${FPE} ${FPE_DIR}
+chmod 644 ${FPE_DIR}/${FPE}
 echo -n -e 'ui_print done\n' > /proc/self/fd/$2
 echo -n -e 'ui_print\n' > /proc/self/fd/$2
 
 echo -n -e 'ui_print Installing FDroid...\n' > /proc/self/fd/$2
-FDROIDDIR=/system/app/${FDROID_NAME}
-mkdir ${FDROIDDIR}
-chmod 755 ${FDROIDDIR}
 cp ${FDROID} ${FDROIDDIR}
 chmod 644 ${FDROIDDIR}/${FDROID}
 
