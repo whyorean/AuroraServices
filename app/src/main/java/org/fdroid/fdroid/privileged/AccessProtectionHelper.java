@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Binder;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,13 +37,13 @@ public class AccessProtectionHelper {
 
     Context context;
     PackageManager pm;
-    HashSet<String> whitelist;
+    HashSet<Pair<String, String>> whitelist;
 
     AccessProtectionHelper(Context context) {
         this(context, ClientWhitelist.whitelist);
     }
 
-    AccessProtectionHelper(Context context, HashSet<String> whitelist) {
+    AccessProtectionHelper(Context context, HashSet<Pair<String, String>> whitelist) {
         this.context = context;
         this.pm = context.getPackageManager();
         this.whitelist = whitelist;
@@ -79,7 +80,9 @@ public class AccessProtectionHelper {
         try {
             byte[] currentPackageCert = getPackageCertificate(packageName);
 
-            for (String whitelistHashString : whitelist) {
+            for (Pair whitelistEntry : whitelist) {
+                String whitelistPackageName = (String) whitelistEntry.first;
+                String whitelistHashString = (String) whitelistEntry.second;
                 byte[] whitelistHash = hexStringToByteArray(whitelistHashString);
 
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -89,8 +92,9 @@ public class AccessProtectionHelper {
                 Log.d(PrivilegedService.TAG, "Allowed cert hash: " + whitelistHashString);
                 Log.d(PrivilegedService.TAG, "Package cert hash: " + packageHashString);
 
+                boolean packageNameMatches = packageName.equals(whitelistPackageName);
                 boolean packageCertMatches = Arrays.equals(whitelistHash, packageHash);
-                if (packageCertMatches) {
+                if (packageNameMatches && packageCertMatches) {
                     Log.d(PrivilegedService.TAG, "Package is allowed to access the privileged extension!");
                     return true;
                 }
