@@ -1,16 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'checkstyle'
 
-/* gets the version name from the latest Git tag, stripping the leading v off */
-def getVersionName = { ->
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'describe', '--tags', '--always'
-        standardOutput = stdout
-    }
-    return stdout.toString().trim().substring(1)
-}
-
 repositories {
     jcenter()
 }
@@ -28,10 +18,6 @@ android {
     buildToolsVersion '24.0.1'
 
     defaultConfig {
-        minSdkVersion 8
-        targetSdkVersion 24
-        versionCode 1050
-        versionName getVersionName()
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
@@ -41,6 +27,15 @@ android {
         // Use Java 1.7, requires minSdk 8
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    buildTypes {
+        all {
+            // Keep IPackageInstallObserver and IPackageDeleteObserver
+            minifyEnabled false
+            useProguard false
+            shrinkResources false
+        }
     }
 
     lintOptions {
