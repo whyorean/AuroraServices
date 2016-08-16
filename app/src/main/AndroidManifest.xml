@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="org.fdroid.fdroid.privileged"
-    android:versionCode="1050"
-    android:versionName="0.1">
+    android:versionCode="2000"
+    android:versionName="0.2">
 
     <uses-sdk
         android:minSdkVersion="8"
