@@ -117,16 +117,18 @@ android {
             doLast {
                 def downloadDir = "${buildDir}/intermediates"
                 def f = new File("${downloadDir}/FDroid.apk")
+                // TODO switch back once v0.101 is available at this link:
+                //def url = 'https://f-droid.org/FDroid.apk'
+                def url = 'https://f-droid.org/repo/org.fdroid.fdroid_101005.apk'
                 if (!f.exists()) {
-                    def url = 'https://f-droid.org/FDroid.apk'
                     println "Downloading ${url}"
                     new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
                 }
                 def asc = new File("${downloadDir}/FDroid.apk.asc")
                 if (!asc.exists()) {
-                    def url = 'https://f-droid.org/FDroid.apk.asc'
-                    println "Downloading ${url}"
-                    new URL(url).withInputStream { i -> asc.withOutputStream { it << i } }
+                    def ascurl = url + '.asc'
+                    println "Downloading ${ascurl}"
+                    new URL(ascurl).withInputStream { i -> asc.withOutputStream { it << i } }
                 }
                 println "Verifying using ${asc}"
                 exec {
