@@ -42,7 +42,8 @@ rm -f /system/app/FDroid*/*
 rm -f /system/priv-app/FDroid*
 rm -f /system/priv-app/FDroid*/*
 
-BUILD_VERSION_SDK_INT="$(getprop ro.build.version.sdk)"
+BUILD_VERSION_SDK="$(grep -F ro.build.version.sdk /system/build.prop)"
+BUILD_VERSION_SDK_INT="${BUILD_VERSION_SDK#*=}"
 if [ "${BUILD_VERSION_SDK_INT}" -ge 21 ]
 then
   FPE_DIR="/system/priv-app/${FPE_NAME}"
