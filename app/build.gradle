@@ -121,9 +121,7 @@ android {
             doLast {
                 def downloadDir = "${buildDir}/intermediates"
                 def f = new File("${downloadDir}/FDroid.apk")
-                // TODO switch back once v0.101 is available at this link:
-                //def url = 'https://f-droid.org/FDroid.apk'
-                def url = 'https://f-droid.org/repo/org.fdroid.fdroid_101005.apk'
+                def url = 'https://f-droid.org/FDroid.apk'
                 if (!f.exists()) {
                     println "Downloading ${url}"
                     new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
