@@ -110,7 +110,11 @@ android {
         def zipTask = project.tasks.create("updateZip${name.capitalize()}", Zip) {
             dependsOn copyApkTask, copyScriptTask
             from zipBase
-            archiveName "${archivesBaseName}-${getVersionName()}-${name}.zip"
+            if (name.equals("release")) {
+              archiveName "${archivesBaseName}-${getVersionName()}.zip"
+            } else {
+              archiveName "${archivesBaseName}-${getVersionName()}-${name}.zip"
+            }
         }
 
         def getFDroidApkTask = project.tasks.create("getFDroidApk${name.capitalize()}") {
@@ -154,7 +158,11 @@ android {
         def zipWithFDroidTask = project.tasks.create("updateZipWithFDroid${name.capitalize()}", Zip) {
             dependsOn copyFDroidApkTask
             from zipWithFDroidBase
-            archiveName "${archivesBaseName}WithFDroid-${getVersionName()}-${name}.zip"
+            if (name.equals("release")) {
+              archiveName "${archivesBaseName}WithFDroid-${getVersionName()}.zip"
+            } else {
+              archiveName "${archivesBaseName}WithFDroid-${getVersionName()}-${name}.zip"
+            }
         }
 
         project.tasks.build.dependsOn zipTask
