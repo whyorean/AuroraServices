@@ -107,7 +107,7 @@ android {
             into "${zipBase}/META-INF/com/google/android/"
         }
 
-        def zipTask = project.tasks.create("updateZip${name.capitalize()}", Zip) {
+        def updateZipTask = project.tasks.create("assembleUpdateZip${name.capitalize()}", Zip) {
             dependsOn copyApkTask, copyScriptTask
             from zipBase
             if (name.equals("release")) {
@@ -153,7 +153,7 @@ android {
             into zipWithFDroidBase
         }
 
-        def zipWithFDroidTask = project.tasks.create("updateZipWithFDroid${name.capitalize()}", Zip) {
+        def zipWithFDroidTask = project.tasks.create("assembleUpdateZipWithFDroid${name.capitalize()}", Zip) {
             dependsOn copyFDroidApkTask
             from zipWithFDroidBase
             if (name.equals("release")) {
@@ -163,7 +163,7 @@ android {
             }
         }
 
-        project.tasks.build.dependsOn zipTask
+        project.tasks.build.dependsOn updateZipTask
     }
 }
 

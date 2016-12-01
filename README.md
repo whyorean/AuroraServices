@@ -78,7 +78,7 @@ Build a complete "update.zip" to flash to a device to install F-Droid and the Pr
 
 Build an "update.zip" to flash to a device to install just the Privileged Extension:
 
-    ./gradlew updateZipDebug
+    ./gradlew assembleUpdateZipDebug
 
 Build the standlone APK using:
 
