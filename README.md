@@ -74,11 +74,11 @@ You can [download the extension from our repo](https://f-droid.org/app/org.fdroi
 
 Build a complete "update.zip" to flash to a device to install F-Droid and the Privileged Extension:
 
-    ./gradlew updateZipWithFDroidRelease
+    ./gradlew assembleUpdateZipFromBinariesDebug
 
 Build an "update.zip" to flash to a device to install just the Privileged Extension:
 
-    ./gradlew updateZipDebug
+    ./gradlew assembleUpdateZipDebug
 
 Build the standlone APK using:
 
