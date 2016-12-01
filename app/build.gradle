@@ -11,6 +11,17 @@ def getVersionName = { ->
     return stdout.toString().trim()
 }
 
+gradle.allprojects {
+    ext.getVersionCode = { ->
+        def manifestFile = file("app/src/main/AndroidManifest.xml")
+        def pattern = Pattern.compile("versionCode=\"(\\d+)\"")
+        def manifestText = manifestFile.getText()
+        def matcher = pattern.matcher(manifestText)
+        matcher.find()
+        return Integer.parseInt(matcher.group(1))
+    }
+}
+
 repositories {
     jcenter()
 }
@@ -117,11 +128,36 @@ android {
             }
         }
 
+        def getPrivilegedExtensionApkTask = project.tasks.create("getPrivilegedExtensionApk${name.capitalize()}") {
+            doLast {
+                def downloadDir = "${buildDir}/intermediates"
+                def f = new File("${downloadDir}/FDroidPrivilegedExtension.apk")
+                def url = "https://f-droid.org/repo/org.fdroid.fdroid.privileged_" + getVersionCode() + ".apk"
+                if (!f.exists()) {
+                    println "Downloading ${url}"
+                    new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
+                }
+                def asc = new File("${downloadDir}/FDroidPrivilegedExtension.apk.asc")
+                if (!asc.exists()) {
+                    def ascurl = url + '.asc'
+                    println "Downloading ${ascurl}"
+                    new URL(ascurl).withInputStream { i -> asc.withOutputStream { it << i } }
+                }
+                println "Verifying using ${asc}"
+                exec {
+                    def keyring = new File(project.rootDir, '/f-droid.org-signing-key.gpg')
+                    executable = 'gpg'
+                    args '--keyring', keyring, '--no-default-keyring', '--verify', asc
+                }
+            }
+        }
+
         def getFDroidApkTask = project.tasks.create("getFDroidApk${name.capitalize()}") {
             doLast {
                 def downloadDir = "${buildDir}/intermediates"
                 def f = new File("${downloadDir}/FDroid.apk")
-                def url = 'https://f-droid.org/FDroid.apk'
+                //def url = 'https://f-droid.org/FDroid.apk' // reenable once its v0.101 or newer
+                def url = "https://f-droid.org/repo/org.fdroid.fdroid_102050.apk"
                 if (!f.exists()) {
                     println "Downloading ${url}"
                     new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
@@ -148,19 +184,16 @@ android {
         }
 
         def copyFDroidApkTask = project.tasks.create("copyFDroidApk${name.capitalize()}", Copy) {
-            dependsOn getFDroidApkTask, copyUpdateZipDirTask
+            dependsOn getPrivilegedExtensionApkTask, getFDroidApkTask, copyUpdateZipDirTask
             from "${buildDir}/intermediates/FDroid.apk"
             into zipWithFDroidBase
         }
 
-        def zipWithFDroidTask = project.tasks.create("assembleUpdateZipWithFDroid${name.capitalize()}", Zip) {
+        def updateZipFromBinariesTask = project.tasks.create("assembleUpdateZipFromBinaries${name.capitalize()}", Zip) {
             dependsOn copyFDroidApkTask
             from zipWithFDroidBase
-            if (name.equals("release")) {
-              archiveName "${archivesBaseName}WithFDroid-${getVersionName()}.zip"
-            } else {
-              archiveName "${archivesBaseName}WithFDroid-${getVersionName()}-${name}.zip"
-            }
+            // the .zip name should end in "-debug.zip" once this is ZIP is signed, like updateZipTask
+            archiveName "${archivesBaseName}FromBinaries-${getVersionName()}.zip"
         }
 
         project.tasks.build.dependsOn updateZipTask
