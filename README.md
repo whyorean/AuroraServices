@@ -90,3 +90,25 @@ In order to have final, signed release versions that are ready for installing, a
     key.store.password=mysecurestorepw
     key.alias=release
     key.alias.password=mysecurekeypw
+
+## Testing in the Emulator
+
+To test the priveleged extension in the emulator, one has to modify the system.img
+It is located under the Android SDK install path:
+```
+$ANDROID_HOME/system-images/android-23/google_apis/x86_64
+```
+for an API 23 (Marshmallow, 6.0) x86_64 image with Google APIs.
+
+To install it, first build the standalone APK, and then run these in the above directory
+
+    mkdir system
+    mount -o loop system.img system
+    mkdir system/priv-app/FDroidPrivilegedExtension
+
+Copy the standalone APK to the above created 'FDroidPrivilegedExtension' folder
+After that, you need to set the correct SELinux context using:
+
+    chcon -R --reference=app/webview system/priv-app/FDroidPrivilegedExtension
+
+Upon booting the emulator it should have the PrivExt installed, and one can also install the F-Droid app this way, or via the normal methods.
