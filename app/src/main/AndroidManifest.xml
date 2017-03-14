@@ -7,7 +7,7 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="24" />
+        android:targetSdkVersion="25" />
 
     <!-- These permissions are only granted when this apk is installed as a privileged app! -->
     <uses-permission
