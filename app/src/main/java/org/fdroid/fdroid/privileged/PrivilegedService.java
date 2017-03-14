@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Dominik Schürmann <dominik@dominikschuermann.de>
+ * Copyright 2007, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +18,28 @@
 package org.fdroid.fdroid.privileged;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Service;
+import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.IPackageDeleteObserver;
 import android.content.pm.IPackageInstallObserver;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageInstaller;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import java.lang.reflect.Method;
 
@@ -38,11 +49,21 @@ import java.lang.reflect.Method;
 public class PrivilegedService extends Service {
 
     public static final String TAG = "PrivilegedExtension";
+    private static final String BROADCAST_ACTION =
+            "org.fdroid.fdroid.PrivilegedExtension.ACTION_INSTALL_COMMIT";
+    private static final String BROADCAST_SENDER_PERMISSION =
+            "android.permission.INSTALL_PACKAGES";
+
+    // From fdroidclient PrivilegedInstaller.java
+    private static final int INSTALL_SUCCEEDED = 1;
+    private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;
 
     private AccessProtectionHelper accessProtectionHelper;
 
     private Method installMethod;
     private Method deleteMethod;
+
+    private IPrivilegedCallback mCallback;
 
     private boolean hasPrivilegedPermissionsImpl() {
         boolean hasInstallPermission =
@@ -116,6 +137,77 @@ public class PrivilegedService extends Service {
         }
     }
 
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final int statusCode = intent.getIntExtra(
+                    PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+            if (statusCode == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                context.startActivity((Intent) intent.getParcelableExtra(Intent.EXTRA_INTENT));
+            } else {
+                int returnCode;
+                switch (statusCode) {
+                    case PackageInstaller.STATUS_SUCCESS: // 0
+                        returnCode = INSTALL_SUCCEEDED; // 1
+                        break;
+                    case PackageInstaller.STATUS_FAILURE: // 1
+                        returnCode = INSTALL_FAILED_INTERNAL_ERROR; // -110, Arbitary
+                        break;
+                    default:
+                        returnCode = statusCode; // 2-7
+                    }
+                try {
+                    mCallback.handleResult(null /* packageName */, returnCode);
+                } catch (RemoteException e1) {
+                    Log.e(TAG, "RemoteException", e1);
+                }
+            }
+        }
+    };
+
+    /**
+    * Below function is copied mostly as-is from
+    * https://android.googlesource.com/platform/packages/apps/PackageInstaller/+/06163dec5a23bb3f17f7e6279f6d46e1851b7d16
+    */
+    @TargetApi(Build.VERSION_CODES.N)
+    private void doPackageStage(Uri packageURI) {
+        final PackageManager pm = getPackageManager();
+        final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        final PackageInstaller packageInstaller = pm.getPackageInstaller();
+        PackageInstaller.Session session = null;
+        try {
+            final int sessionId = packageInstaller.createSession(params);
+            final byte[] buffer = new byte[65536];
+            session = packageInstaller.openSession(sessionId);
+            final InputStream in = getContentResolver().openInputStream(packageURI);
+            final OutputStream out = session.openWrite("PackageInstaller", 0, -1 /* sizeBytes, unknown */);
+            try {
+                int c;
+                while ((c = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, c);
+                }
+                session.fsync(out);
+            } finally {
+                IoUtils.closeQuietly(in);
+                IoUtils.closeQuietly(out);
+            }
+            // Create a PendingIntent and use it to generate the IntentSender
+            Intent broadcastIntent = new Intent(BROADCAST_ACTION);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    this /*context*/,
+                    sessionId,
+                    broadcastIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            session.commit(pendingIntent.getIntentSender());
+        } catch (IOException e) {
+            Log.d(TAG, "Failure", e);
+            Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        } finally {
+            IoUtils.closeQuietly(session);
+        }
+    }
+
     private final IPrivilegedService.Stub binder = new IPrivilegedService.Stub() {
         @Override
         public boolean hasPrivilegedPermissions() {
@@ -130,7 +222,12 @@ public class PrivilegedService extends Service {
                 return;
             }
 
-            installPackageImpl(packageURI, flags, installerPackageName, callback);
+            if (Build.VERSION.SDK_INT >= 24) {
+                doPackageStage(packageURI);
+                mCallback = callback;
+            } else {
+                installPackageImpl(packageURI, flags, installerPackageName, callback);
+            }
         }
 
         @Override
@@ -172,6 +269,11 @@ public class PrivilegedService extends Service {
             Log.e(TAG, "Android not compatible!", e);
             stopSelf();
         }
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BROADCAST_ACTION);
+        registerReceiver(
+                mBroadcastReceiver, intentFilter, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
     }
 
     /**
@@ -188,6 +290,12 @@ public class PrivilegedService extends Service {
         DevicePolicyManager manager =
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         return manager.isDeviceOwnerApp(packageName);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mBroadcastReceiver);
     }
 
 }
