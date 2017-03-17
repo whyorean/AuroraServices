@@ -8,6 +8,7 @@ cache:
 test:
   script:
     - export GRADLE_USER_HOME=$PWD/.gradle
+    - ./gradlew checkstyle
     # always report on lint errors to the build log
     - sed -i -e 's,textReport .*,textReport true,' app/build.gradle
     - ./gradlew build || {
@@ -69,11 +70,3 @@ connected24:
     - rm -f $GRADLE_USER_HOME/caches/modules-2/modules-2.lock
     - rm -fr $GRADLE_USER_HOME/caches/*/plugin-resolution/
     - exit $EXITVALUE
-
-checkstyle:
-  script:
-    - export GRADLE_USER_HOME=$PWD/.gradle
-    - ./gradlew checkstyle
-    # this file changes every time but should not be cached
-    - rm -f $GRADLE_USER_HOME/caches/modules-2/modules-2.lock
-    - rm -fr $GRADLE_USER_HOME/caches/*/plugin-resolution/
