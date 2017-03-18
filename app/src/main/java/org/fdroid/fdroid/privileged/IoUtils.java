@@ -17,7 +17,6 @@
 package org.fdroid.fdroid.privileged;
 
 import android.annotation.TargetApi;
-import android.os.Build;
 
 public final class IoUtils {
     private IoUtils() {
@@ -26,7 +25,7 @@ public final class IoUtils {
     /**
      * Closes 'closeable', ignoring any checked exceptions. Does nothing if 'closeable' is null.
      */
-    @TargetApi(Build.VERSION_CODES.N)
+    @TargetApi(24)
     public static void closeQuietly(AutoCloseable closeable) {
         if (closeable != null) {
             try {
