@@ -169,7 +169,7 @@ public class PrivilegedService extends Service {
     * Below function is copied mostly as-is from
     * https://android.googlesource.com/platform/packages/apps/PackageInstaller/+/06163dec5a23bb3f17f7e6279f6d46e1851b7d16
     */
-    @TargetApi(Build.VERSION_CODES.N)
+    @TargetApi(24)
     private void doPackageStage(Uri packageURI) {
         final PackageManager pm = getPackageManager();
         final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
