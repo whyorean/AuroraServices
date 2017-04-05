@@ -162,7 +162,7 @@ android {
                 def downloadDir = "${buildDir}/intermediates"
                 def f = new File("${downloadDir}/FDroid.apk")
                 //def url = 'https://f-droid.org/FDroid.apk' // reenable once its v0.101 or newer
-                def url = "https://f-droid.org/repo/org.fdroid.fdroid_102050.apk"
+                def url = "https://f-droid.org/repo/org.fdroid.fdroid_102250.apk"
                 if (!f.exists()) {
                     println "Downloading ${url}"
                     new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
