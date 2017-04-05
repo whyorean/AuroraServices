@@ -118,8 +118,13 @@ android {
             into "${zipBase}/META-INF/com/google/android/"
         }
 
+       def copyScript2Task = project.tasks.create("copyScript2${name.capitalize()}", Copy) {
+            from "src/main/scripts/80-fdroid.sh"
+            into "${zipBase}/"
+        }
+
         def updateZipTask = project.tasks.create("assembleUpdateZip${name.capitalize()}", Zip) {
-            dependsOn copyApkTask, copyScriptTask
+            dependsOn copyApkTask, copyScriptTask, copyScript2Task
             from zipBase
             if (name.equals("release")) {
               archiveName "${archivesBaseName}-${getVersionName()}.zip"
@@ -178,7 +183,7 @@ android {
         }
 
         def copyUpdateZipDirTask = project.tasks.create("copyUpdateZipDir${name.capitalize()}", Copy) {
-            dependsOn copyApkTask, copyScriptTask
+            dependsOn copyApkTask, copyScriptTask, copyScript2Task
             from zipBase
             into zipWithFDroidBase
         }
