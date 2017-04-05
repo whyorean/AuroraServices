@@ -49,14 +49,13 @@ import java.lang.reflect.Method;
 public class PrivilegedService extends Service {
 
     public static final String TAG = "PrivilegedExtension";
-    private static final String BROADCAST_ACTION =
+    private static final String BROADCAST_ACTION_INSTALL =
             "org.fdroid.fdroid.PrivilegedExtension.ACTION_INSTALL_COMMIT";
+    private static final String BROADCAST_ACTION_UNINSTALL =
+            "org.fdroid.fdroid.PrivilegedExtension.ACTION_UNINSTALL_COMMIT";
     private static final String BROADCAST_SENDER_PERMISSION =
             "android.permission.INSTALL_PACKAGES";
-
-    // From fdroidclient PrivilegedInstaller.java
-    private static final int INSTALL_SUCCEEDED = 1;
-    private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;
+    private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";
 
     private AccessProtectionHelper accessProtectionHelper;
 
@@ -64,6 +63,8 @@ public class PrivilegedService extends Service {
     private Method deleteMethod;
 
     private IPrivilegedCallback mCallback;
+
+    Context context = this;
 
     private boolean hasPrivilegedPermissionsImpl() {
         boolean hasInstallPermission =
@@ -140,27 +141,14 @@ public class PrivilegedService extends Service {
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            final int statusCode = intent.getIntExtra(
-                    PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
-            if (statusCode == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                context.startActivity((Intent) intent.getParcelableExtra(Intent.EXTRA_INTENT));
-            } else {
-                int returnCode;
-                switch (statusCode) {
-                    case PackageInstaller.STATUS_SUCCESS: // 0
-                        returnCode = INSTALL_SUCCEEDED; // 1
-                        break;
-                    case PackageInstaller.STATUS_FAILURE: // 1
-                        returnCode = INSTALL_FAILED_INTERNAL_ERROR; // -110, Arbitary
-                        break;
-                    default:
-                        returnCode = statusCode; // 2-7
-                    }
-                try {
-                    mCallback.handleResult(null /* packageName */, returnCode);
-                } catch (RemoteException e1) {
-                    Log.e(TAG, "RemoteException", e1);
-                }
+            final int returnCode = intent.getIntExtra(
+                    EXTRA_LEGACY_STATUS, PackageInstaller.STATUS_FAILURE);
+            final String packageName = intent.getStringExtra(
+                    PackageInstaller.EXTRA_PACKAGE_NAME);
+            try {
+                mCallback.handleResult(packageName, returnCode);
+            } catch (RemoteException e1) {
+                Log.e(TAG, "RemoteException", e1);
             }
         }
     };
@@ -193,7 +181,7 @@ public class PrivilegedService extends Service {
                 IoUtils.closeQuietly(out);
             }
             // Create a PendingIntent and use it to generate the IntentSender
-            Intent broadcastIntent = new Intent(BROADCAST_ACTION);
+            Intent broadcastIntent = new Intent(BROADCAST_ACTION_INSTALL);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     this /*context*/,
                     sessionId,
@@ -235,8 +223,27 @@ public class PrivilegedService extends Service {
             if (!accessProtectionHelper.isCallerAllowed()) {
                 return;
             }
+            if (Build.VERSION.SDK_INT >= 24) {
+                mCallback = callback;
+                final PackageManager pm = getPackageManager();
+                final PackageInstaller packageInstaller = pm.getPackageInstaller();
 
-            deletePackageImpl(packageName, flags, callback);
+                /*
+                * The client app used to set this to F-Droid, but we need it to be set to
+                * this package's package name to be able to uninstall from here.
+                */
+                pm.setInstallerPackageName(packageName, "org.fdroid.fdroid.privileged");
+                // Create a PendingIntent and use it to generate the IntentSender
+                Intent broadcastIntent = new Intent(BROADCAST_ACTION_UNINSTALL);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                        context, // context
+                        0, // arbitary
+                        broadcastIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                packageInstaller.uninstall(packageName, pendingIntent.getIntentSender());
+            } else {
+                deletePackageImpl(packageName, flags, callback);
+            }
         }
     };
 
@@ -271,9 +278,13 @@ public class PrivilegedService extends Service {
         }
 
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BROADCAST_ACTION);
+        intentFilter.addAction(BROADCAST_ACTION_INSTALL);
         registerReceiver(
                 mBroadcastReceiver, intentFilter, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
+        IntentFilter intentFilter2 = new IntentFilter();
+        intentFilter2.addAction(BROADCAST_ACTION_UNINSTALL);
+        registerReceiver(
+                mBroadcastReceiver, intentFilter2, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
     }
 
     /**
