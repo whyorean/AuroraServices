@@ -31,6 +31,8 @@ VARIANT="$1"
 
 BINARIES="$2"
 
+GPG="gpg --keyring $PROG_DIR/f-droid.org-signing-key.gpg --no-default-keyring --trust-model always"
+
 VERSION=$(grep versionCode=\"\[[:digit:]]\*\" app/src/main/AndroidManifest.xml | cut -d \" -f 2)
 GITVERSION=$(git describe --tags --always)
 
@@ -55,7 +57,7 @@ if [ -z $BINARIES ] ; then
 else
 	[ ! -f $TMP_DIR/$PRIVEXT_APK ] && curl -L https://f-droid.org/repo/$PRIVEXT_APK > $TMP_DIR/$PRIVEXT_APK
 	[ ! -f $TMP_DIR/${PRIVEXT_APK}.asc ] && curl -L https://f-droid.org/repo/${PRIVEXT_APK}.asc > $TMP_DIR/${PRIVEXT_APK}.asc
-	gpg --keyring $PROG_DIR/f-droid.org-signing-key.gpg --no-default-keyring --verify $TMP_DIR/${PRIVEXT_APK}.asc
+	$GPG --verify $TMP_DIR/${PRIVEXT_APK}.asc
 	rm $TMP_DIR/${PRIVEXT_APK}.asc
 	mv $TMP_DIR/$PRIVEXT_APK $TMP_DIR/FDroidPrivilegedExtension.apk
 fi
@@ -63,7 +65,7 @@ fi
 # For both
 [ ! -f $TMP_DIR/$FDROID_APK ] && curl -L https://f-droid.org/repo/$FDROID_APK > $TMP_DIR/$FDROID_APK
 [ ! -f $TMP_DIR/${FDROID_APK}.asc ] && curl -L https://f-droid.org/repo/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
-gpg --keyring $PROG_DIR/f-droid.org-signing-key.gpg --no-default-keyring --verify $TMP_DIR/${FDROID_APK}.asc
+$GPG --verify $TMP_DIR/${FDROID_APK}.asc
 rm $TMP_DIR/${FDROID_APK}.asc
 mv $TMP_DIR/$FDROID_APK $TMP_DIR/FDroid.apk
 
