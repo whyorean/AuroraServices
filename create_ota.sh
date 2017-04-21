@@ -85,8 +85,9 @@ if [ $VARIANT == "debug" ]; then
 else
 	ZIP=${ZIPBASE}.zip
 fi
-mkdir -p $PROG_DIR/build
-[ -f $PROG_DIR/build/$ZIP ] && rm $PROG_DIR/build/$ZIP
+OUT_DIR=$PROG_DIR/app/build/distributions
+mkdir -p $OUT_DIR
+[ -f $OUT_DIR/$ZIP ] && rm -f $OUT_DIR/$ZIP
 pushd $TMP_DIR
-zip -r $PROG_DIR/build/$ZIP .
+zip -r $OUT_DIR/$ZIP .
 popd
