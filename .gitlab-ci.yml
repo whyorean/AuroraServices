@@ -1,4 +1,4 @@
-image: registry.gitlab.com/fdroid/ci-images:client
+image: registry.gitlab.com/fdroid/ci-images:client-latest
 
 cache:
   paths:
@@ -15,6 +15,8 @@ before_script:
 test:
   script:
     - ./gradlew checkstyle
+    - ./gradlew assembleDebug
+    - ./create_ota.sh debug
     # always report on lint errors to the build log
     - sed -i -e 's,textReport .*,textReport true,' app/build.gradle
     - ./gradlew build || {
@@ -24,6 +26,7 @@ test:
           done;
           exit 1;
       }
+    - ./create_ota.sh release binaries
 
 connected10:
   variables:
