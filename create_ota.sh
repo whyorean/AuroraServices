@@ -46,14 +46,19 @@ cp app/src/main/scripts/update-binary $TMP_DIR/META-INF/com/google/android/
 cp app/src/main/scripts/80-fdroid.sh $TMP_DIR/
 
 if [ -z $BINARIES ] ; then
-	$PROG_DIR/gradlew assemble$(echo $VARIANT | tr 'dr' 'DR')
-	if [ $VARIANT == "debug" ]; then
-		cp $PROG_DIR/app/build/outputs/apk/FDroidPrivilegedExtension-${VARIANT}.apk $TMP_DIR/FDroidPrivilegedExtension.apk
-	elif [ -f PROG_DIR/app/build/outputs/apk/FDroidPrivilegedExtension-${VARIANT}-signed.apk ]; then
-		cp PROG_DIR/app/build/outputs/apk/FDroidPrivilegedExtension-${VARIANT}-signed.apk $TMP_DIR/FDroidPrivilegedExtension.apk
-	else
-		cp PROG_DIR/app/build/outputs/apk/FDroidPrivilegedExtension-${VARIANT}-unsigned.apk $TMP_DIR/FDroidPrivilegedExtension.apk
-	fi
+    cd $PROG_DIR
+    ./gradlew assemble$(echo $VARIANT | tr 'dr' 'DR')
+    OUT_DIR=$PROG_DIR/app/build/outputs/apk
+    if [ $VARIANT == "debug" ]; then
+	cp $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}.apk \
+	   $TMP_DIR/FDroidPrivilegedExtension.apk
+    elif [ -f $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}-signed.apk ]; then
+	cp $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}-signed.apk \
+	   $TMP_DIR/FDroidPrivilegedExtension.apk
+    else
+	cp $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}-unsigned.apk \
+	   $TMP_DIR/FDroidPrivilegedExtension.apk
+    fi
 else
 	[ ! -f $TMP_DIR/$PRIVEXT_APK ] && curl -L https://f-droid.org/repo/$PRIVEXT_APK > $TMP_DIR/$PRIVEXT_APK
 	[ ! -f $TMP_DIR/${PRIVEXT_APK}.asc ] && curl -L https://f-droid.org/repo/${PRIVEXT_APK}.asc > $TMP_DIR/${PRIVEXT_APK}.asc
