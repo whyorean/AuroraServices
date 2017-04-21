@@ -34,7 +34,8 @@ BINARIES="$2"
 VERSION=$(grep versionCode=\"\[[:digit:]]\*\" app/src/main/AndroidManifest.xml | cut -d \" -f 2)
 GITVERSION=$(git describe --tags --always)
 
-FDROID_APK=org.fdroid.fdroid_102250.apk
+# TODO this should be FDroid.apk once 102350 is there
+FDROID_APK=org.fdroid.fdroid_102350.apk
 PRIVEXT_APK=org.fdroid.fdroid.privileged_${VERSION}.apk
 
 # Collect files
