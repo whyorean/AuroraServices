@@ -60,16 +60,16 @@ if [ -z $BINARIES ] ; then
 	   $TMP_DIR/FDroidPrivilegedExtension.apk
     fi
 else
-	[ ! -f $TMP_DIR/$PRIVEXT_APK ] && curl -L https://f-droid.org/repo/$PRIVEXT_APK > $TMP_DIR/$PRIVEXT_APK
-	[ ! -f $TMP_DIR/${PRIVEXT_APK}.asc ] && curl -L https://f-droid.org/repo/${PRIVEXT_APK}.asc > $TMP_DIR/${PRIVEXT_APK}.asc
+	curl -L https://f-droid.org/repo/$PRIVEXT_APK > $TMP_DIR/$PRIVEXT_APK
+	curl -L https://f-droid.org/repo/${PRIVEXT_APK}.asc > $TMP_DIR/${PRIVEXT_APK}.asc
 	$GPG --verify $TMP_DIR/${PRIVEXT_APK}.asc
 	rm $TMP_DIR/${PRIVEXT_APK}.asc
 	mv $TMP_DIR/$PRIVEXT_APK $TMP_DIR/FDroidPrivilegedExtension.apk
 fi
 
 # For both
-[ ! -f $TMP_DIR/$FDROID_APK ] && curl -L https://f-droid.org/repo/$FDROID_APK > $TMP_DIR/$FDROID_APK
-[ ! -f $TMP_DIR/${FDROID_APK}.asc ] && curl -L https://f-droid.org/repo/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
+curl -L https://f-droid.org/repo/$FDROID_APK > $TMP_DIR/$FDROID_APK
+curl -L https://f-droid.org/repo/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
 $GPG --verify $TMP_DIR/${FDROID_APK}.asc
 rm $TMP_DIR/${FDROID_APK}.asc
 mv $TMP_DIR/$FDROID_APK $TMP_DIR/FDroid.apk
