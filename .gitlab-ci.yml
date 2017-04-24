@@ -26,6 +26,8 @@ test:
           done;
           exit 1;
       }
+    # use versionCode that is known to exist on f-droid.org for test:
+    - sed -i 's,versionCode="[^"]*",versionCode="2030",' app/src/main/AndroidManifest.xml
     - ./create_ota.sh release binaries
 
 connected10:
