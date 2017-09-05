@@ -1,6 +1,4 @@
-image: registry.gitlab.com/eighthave/ci-images-client:latest
-# re-enable once gitlab support fixes the repo :-/
-#image: registry.gitlab.com/fdroid/ci-images-client:latest
+image: registry.gitlab.com/fdroid/ci-images-client:latest
 
 cache:
   paths:
@@ -13,6 +11,7 @@ before_script:
   - echo y | android --silent update sdk --no-ui --filter android-${ANDROID_COMPILE_SDK}
   - export ANDROID_BUILD_TOOLS=`sed -n "s,.*buildToolsVersion\s*'\([0-9][0-9.]*\)'.*,\1,p" app/build.gradle`
   - echo y | android --silent update sdk --no-ui --all --filter android-${ANDROID_BUILD_TOOLS}
+  - apt-get update && apt-get -y install gnupg
 
 test:
   script:
