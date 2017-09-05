@@ -21,7 +21,12 @@ Advantages of this design:
 
 ## How do I install it on my device?
 
-The best way to install F-Droid Privileged Extension is to flash the _update.zip_ file using the standard mechanism for flashing updates to the ROM. This requires the device have an unlocked bootloader. A custom Recovery firmware is recommended. This is the same procedure as flashing "gapps" after flashing a ROM onto your device.
+The best way to install F-Droid Privileged Extension is to flash the
+[_OTA update ZIP_](https://f-droid.org/packages/org.fdroid.fdroid.privileged.ota)
+file using the standard mechanism for flashing updates to the
+ROM. This requires the device have an unlocked bootloader. A custom
+Recovery firmware is recommended. This is the same procedure as
+flashing "gapps" after flashing a ROM onto your device.
 
 Installing the F-Droid Privileged Extension directly from the F-Droid app requires root access and is only possible on Android versions older than 5.0. It is not possible on Android 5.1, 6.0, and newer. To install the extension open the settings inside the F-Droid app, enable "Expert mode" and then enable "Privileged Extension". It will lead you to the extension app which will guide you through the installation process.
 
@@ -67,7 +72,18 @@ https://f-droid.org/wiki/page/Release_Channels_and_Signing_Keys
 
 ## Direct download
 
-You can [download the extension from our repo](https://f-droid.org/app/org.fdroid.fdroid.privileged).
+F-Droid Privileged Extension needs to be flashed as an OTA update on
+all Android versions since 5.0 in order to function.  The official,
+signed ZIP package and PGP signature are available for download from
+f-droid.org:
+
+* https://f-droid.org/packages/org.fdroid.fdroid.privileged.ota
+
+It is also possible to download the bare APK, though this is not the
+recommended way to install it for this first time.  It is provided to
+update the extension after the OTA update ZIP has been flashed.
+
+* https://f-droid.org/packages/org.fdroid.fdroid.privileged
 
 
 ## Building with Gradle
