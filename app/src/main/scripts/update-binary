@@ -25,6 +25,8 @@ FPE_NAME=FDroidPrivilegedExtension
 FPE=${FPE_NAME}.apk
 FDROID_NAME=FDroid
 FDROID=${FDROID_NAME}.apk
+PERM_DIR="/system/etc/permissions"
+PERM=permissions_org.fdroid.fdroid.privileged.xml
 ADDOND=80-fdroid.sh
 
 cd /tmp
@@ -36,6 +38,7 @@ then
   cp /cache/${FPE} .
   cp /cache/${FDROID} .
   cp /cache/${ADDOND} .
+  cp /cache/${PERM} .
 fi
 
 mount /system
@@ -61,6 +64,14 @@ then
 else
   FPE_DIR="/system/app"
   FDROIDDIR="/system/app"
+fi
+
+if [ "${BUILD_VERSION_SDK_INT}" -ge 26 ]
+then
+	mkdir ${PERM_DIR}
+	chmod 755 ${PERM_DIR}
+	cp ${PERM} ${PERM_DIR}
+	chmod 644 ${PERM_DIR}/${PERM}
 fi
 
 cp ${FPE} ${FPE_DIR}

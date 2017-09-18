@@ -44,6 +44,7 @@ PRIVEXT_APK=org.fdroid.fdroid.privileged_${VERSION}.apk
 mkdir -p $TMP_DIR/META-INF/com/google/android/
 cp app/src/main/scripts/update-binary $TMP_DIR/META-INF/com/google/android/
 cp app/src/main/scripts/80-fdroid.sh $TMP_DIR/
+cp app/src/main/permissions_org.fdroid.fdroid.privileged.xml $TMP_DIR/
 
 if [ -z $BINARIES ] ; then
     cd $PROG_DIR
