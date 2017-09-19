@@ -1,0 +1,4 @@
+
+* Fixed OTA ZIP for Android 8.0 Oreo
+
+* translation updates
