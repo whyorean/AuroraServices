@@ -9,11 +9,11 @@
 
 list_files() {
 cat <<EOF
-app/FDroid.apk
-app/FDroid/FDroid.apk
+app/F-Droid.apk
+app/F-Droid/F-Droid.apk
 etc/permissions/permissions_org.fdroid.fdroid.privileged.xml
-priv-app/FDroidPrivilegedExtension.apk
-priv-app/FDroidPrivilegedExtension/FDroidPrivilegedExtension.apk
+priv-app/F-DroidPrivilegedExtension.apk
+priv-app/F-DroidPrivilegedExtension/F-DroidPrivilegedExtension.apk
 EOF
 }
 

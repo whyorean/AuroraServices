@@ -40,21 +40,21 @@ There are potential risks to rooting and unlocking your device, including:
 
 ## How do I build it into my ROM?
 
-F-Droid Privileged Extension is designed to be built into ROMs and signed by the ROM key.  F-Droid only gets permissions via F-Droid Privileged Extension's internal key check, not via having a matching signing key or via `"signature" protectionLevel`.  This git repo includes an _Android.mk_ so it can be directly included via `repo`.   Add `FDroidPrivilegedExtension` to the `PRODUCT_PACKAGES` list to include it in the system image, and use a `repo` manifest like this:
+F-Droid Privileged Extension is designed to be built into ROMs and signed by the ROM key.  F-Droid only gets permissions via F-Droid Privileged Extension's internal key check, not via having a matching signing key or via `"signature" protectionLevel`.  This git repo includes an _Android.mk_ so it can be directly included via `repo`.   Add `F-DroidPrivilegedExtension` to the `PRODUCT_PACKAGES` list to include it in the system image, and use a `repo` manifest like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
 
   <remote name="fdroid" fetch="https://gitlab.com/fdroid/" />
-  <project path="packages/apps/FDroidPrivilegedExtension"
+  <project path="packages/apps/F-DroidPrivilegedExtension"
            name="privileged-extension.git" remote="fdroid"
            revision="refs/tags/0.2" />
 
 </manifest>
 ```
 
-By default, F-Droid Privileged Extension trusts only the official F-Droid builds, and we recommend that https://f-droid.org/FDroid.apk is also included in the ROM. You can verify the binaries using both the APK signature and the PGP key: https://f-droid.org/FDroid.apk.asc
+By default, F-Droid Privileged Extension trusts only the official F-Droid builds, and we recommend that https://f-droid.org/F-Droid.apk is also included in the ROM. You can verify the binaries using both the APK signature and the PGP key: https://f-droid.org/F-Droid.apk.asc
 
 APK signing certificate SHA-256 fingerprint:
 ```
@@ -120,11 +120,11 @@ To install it, first build the standalone APK, and then run these in the above d
 
     mkdir system
     mount -o loop system.img system
-    mkdir system/priv-app/FDroidPrivilegedExtension
+    mkdir system/priv-app/F-DroidPrivilegedExtension
 
-Copy the standalone APK to the above created 'FDroidPrivilegedExtension' folder
+Copy the standalone APK to the above created 'F-DroidPrivilegedExtension' folder
 After that, you need to set the correct SELinux context using:
 
-    chcon -R --reference=app/webview system/priv-app/FDroidPrivilegedExtension
+    chcon -R --reference=app/webview system/priv-app/F-DroidPrivilegedExtension
 
 Upon booting the emulator it should have the PrivExt installed, and one can also install the F-Droid app this way, or via the normal methods.

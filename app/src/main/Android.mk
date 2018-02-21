@@ -9,7 +9,7 @@ LOCAL_SRC_FILES := $(LOCAL_MODULE)
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_PACKAGE_NAME := FDroidPrivilegedExtension
+LOCAL_PACKAGE_NAME := F-DroidPrivilegedExtension
 LOCAL_MODULE_TAGS := optional
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_SDK_VERSION := current

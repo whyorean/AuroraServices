@@ -50,21 +50,21 @@ if [ -z $BINARIES ] ; then
     ./gradlew assemble$(echo $VARIANT | tr 'dr' 'DR')
     OUT_DIR=$PROG_DIR/app/build/outputs/apk
     if [ $VARIANT == "debug" ]; then
-	cp $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}.apk \
-	   $TMP_DIR/FDroidPrivilegedExtension.apk
-    elif [ -f $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}-signed.apk ]; then
-	cp $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}-signed.apk \
-	   $TMP_DIR/FDroidPrivilegedExtension.apk
+	cp $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}.apk \
+	   $TMP_DIR/F-DroidPrivilegedExtension.apk
+    elif [ -f $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}-signed.apk ]; then
+	cp $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}-signed.apk \
+	   $TMP_DIR/F-DroidPrivilegedExtension.apk
     else
-	cp $OUT_DIR/FDroidPrivilegedExtension-${VARIANT}-unsigned.apk \
-	   $TMP_DIR/FDroidPrivilegedExtension.apk
+	cp $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}-unsigned.apk \
+	   $TMP_DIR/F-DroidPrivilegedExtension.apk
     fi
 else
 	curl -L https://f-droid.org/repo/$PRIVEXT_APK > $TMP_DIR/$PRIVEXT_APK
 	curl -L https://f-droid.org/repo/${PRIVEXT_APK}.asc > $TMP_DIR/${PRIVEXT_APK}.asc
 	$GPG --verify $TMP_DIR/${PRIVEXT_APK}.asc
 	rm $TMP_DIR/${PRIVEXT_APK}.asc
-	mv $TMP_DIR/$PRIVEXT_APK $TMP_DIR/FDroidPrivilegedExtension.apk
+	mv $TMP_DIR/$PRIVEXT_APK $TMP_DIR/F-DroidPrivilegedExtension.apk
 fi
 
 # For both
@@ -72,13 +72,13 @@ curl -L https://f-droid.org/$FDROID_APK > $TMP_DIR/$FDROID_APK
 curl -L https://f-droid.org/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
 $GPG --verify $TMP_DIR/${FDROID_APK}.asc
 rm $TMP_DIR/${FDROID_APK}.asc
-mv $TMP_DIR/$FDROID_APK $TMP_DIR/FDroid.apk
+mv $TMP_DIR/$FDROID_APK $TMP_DIR/F-Droid.apk
 
 # Make zip
 if [ -z $BINARIES ]; then
-	ZIPBASE=FDroidPrivilegedExtension-${GITVERSION}
+	ZIPBASE=F-DroidPrivilegedExtension-${GITVERSION}
 else
-	ZIPBASE=FDroidPrivilegedExtensionFromBinaries-${GITVERSION}
+	ZIPBASE=F-DroidPrivilegedExtensionFromBinaries-${GITVERSION}
 fi
 if [ $VARIANT == "debug" ]; then
 	ZIP=${ZIPBASE}-debug.zip

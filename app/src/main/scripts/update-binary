@@ -19,11 +19,11 @@
 # communicate with it using the recovery api.
 # arg 3 is the zip file
 
-echo -n -e 'ui_print Installing FDroidPrivilegedExtension...\n' > /proc/self/fd/$2
+echo -n -e 'ui_print Installing F-DroidPrivilegedExtension...\n' > /proc/self/fd/$2
 
-FPE_NAME=FDroidPrivilegedExtension
+FPE_NAME=F-DroidPrivilegedExtension
 FPE=${FPE_NAME}.apk
-FDROID_NAME=FDroid
+FDROID_NAME=F-Droid
 FDROID=${FDROID_NAME}.apk
 PERM_DIR="/system/etc/permissions"
 PERM=permissions_org.fdroid.fdroid.privileged.xml
@@ -46,6 +46,10 @@ rm -f /system/app/FDroid*
 rm -f /system/app/FDroid*/*
 rm -f /system/priv-app/FDroid*
 rm -f /system/priv-app/FDroid*/*
+rm -f /system/app/F-Droid*
+rm -f /system/app/F-Droid*/*
+rm -f /system/priv-app/F-Droid*
+rm -f /system/priv-app/F-Droid*/*
 
 BUILD_VERSION_SDK="$(grep -F ro.build.version.sdk /system/build.prop)"
 BUILD_VERSION_SDK_INT="${BUILD_VERSION_SDK#*=}"
@@ -79,7 +83,7 @@ chmod 644 ${FPE_DIR}/${FPE}
 echo -n -e 'ui_print done\n' > /proc/self/fd/$2
 echo -n -e 'ui_print\n' > /proc/self/fd/$2
 
-echo -n -e 'ui_print Installing FDroid...\n' > /proc/self/fd/$2
+echo -n -e 'ui_print Installing F-Droid...\n' > /proc/self/fd/$2
 cp ${FDROID} ${FDROIDDIR}
 chmod 644 ${FDROIDDIR}/${FDROID}
 
