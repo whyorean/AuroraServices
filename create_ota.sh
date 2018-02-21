@@ -36,8 +36,7 @@ GPG="gpg --keyring $PROG_DIR/f-droid.org-signing-key.gpg --no-default-keyring --
 VERSION=$(grep versionCode=\"\[[:digit:]]\*\" app/src/main/AndroidManifest.xml | cut -d \" -f 2)
 GITVERSION=$(git describe --tags --always)
 
-# TODO this should be FDroid.apk once 102350 is there
-FDROID_APK=org.fdroid.fdroid_102350.apk
+FDROID_APK=F-Droid.apk
 PRIVEXT_APK=org.fdroid.fdroid.privileged_${VERSION}.apk
 
 # Collect files
@@ -69,8 +68,8 @@ else
 fi
 
 # For both
-curl -L https://f-droid.org/repo/$FDROID_APK > $TMP_DIR/$FDROID_APK
-curl -L https://f-droid.org/repo/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
+curl -L https://f-droid.org/$FDROID_APK > $TMP_DIR/$FDROID_APK
+curl -L https://f-droid.org/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
 $GPG --verify $TMP_DIR/${FDROID_APK}.asc
 rm $TMP_DIR/${FDROID_APK}.asc
 mv $TMP_DIR/$FDROID_APK $TMP_DIR/FDroid.apk
