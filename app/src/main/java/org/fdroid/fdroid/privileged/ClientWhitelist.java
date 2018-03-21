@@ -24,9 +24,12 @@ import java.util.HashSet;
 /**
  * Only apps signed using a certificate with a SHA-256 hash listed here
  * can access the Privileged Extension!
- * 1. Get SHA-256 of certificate with
- * keytool -list -printcert -jarfile com.example.apk
- * 2. Add here as lowercase without colons
+ * <ol>
+ * <li>Get SHA-256 of certificate as lowercase without colons with
+ * <code>keytool -list -printcert -jarfile com.example.apk | sed -n 's,SHA256:\s*\([A-F0-9:]*\),\1,p' | sed 's,:,,g'
+ * | tr A-f a-f</code></li>
+ * <li>Add here with Application ID</li>
+ * </ol>
  */
 public class ClientWhitelist {
 
