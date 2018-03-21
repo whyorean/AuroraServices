@@ -109,22 +109,29 @@ In order to have final, signed release versions that are ready for installing, a
 
 ## Testing in the Emulator
 
-To test the priveleged extension in the emulator, one has to modify the system.img
-It is located under the Android SDK install path:
+To test the priveleged extension in the emulator, one has to modify
+the system.img It is located under the Android SDK install path.  For
+example, here is the `android-23` (Marshmallow, 6.0) x86_64 image with
+Google APIs:
+
 ```
-$ANDROID_HOME/system-images/android-23/google_apis/x86_64
+$ANDROID_HOME/system-images/android-23/google_apis/x86_64/system.img
 ```
-for an API 23 (Marshmallow, 6.0) x86_64 image with Google APIs.
 
-To install it, first build the standalone APK, and then run these in the above directory
+To install it, first build the standalone APK, and then run these in
+the base directory of this git repo.  This copies the APK into the
+right place, and sets up the correct SELinux context.
 
-    mkdir system
-    mount -o loop system.img system
-    mkdir system/priv-app/F-DroidPrivilegedExtension
+```console
+$ ./gradlew assembleDebug
+$ mkdir /tmp/system
+$ sudo mount -o loop /path/to/system.img /tmp/system
+$ sudo mkdir /tmp/system/priv-app/F-DroidPrivilegedExtension
+$ sudo cp app/build/outputs/apk/F-DroidPrivilegedExtension-debug.apk \
+    /tmp/system/priv-app/F-DroidPrivilegedExtension/F-DroidPrivilegedExtension.apk
+$ sudo chcon -R --reference=/tmp/system/app/webview /tmp/system/priv-app/F-DroidPrivilegedExtension
+```
 
-Copy the standalone APK to the above created 'F-DroidPrivilegedExtension' folder
-After that, you need to set the correct SELinux context using:
-
-    chcon -R --reference=app/webview system/priv-app/F-DroidPrivilegedExtension
-
-Upon booting the emulator it should have the PrivExt installed, and one can also install the F-Droid app this way, or via the normal methods.
+Upon booting the emulator it should have the Privileged Extension
+installed.  It is also possible to install the F-Droid app this way,
+or via the normal methods.
