@@ -18,6 +18,8 @@ test:
     - ./gradlew checkstyle
     - ./gradlew assembleDebug
     - ./create_ota.sh debug
+    - printf "key.store=${HOME}/.android/debug.keystore\nkey.store.password=android\nkey.alias=androiddebugkey\nkey.alias.password=android\n" > signing.properties
+    - ./create_ota.sh release
     # always report on lint errors to the build log
     - sed -i -e 's,textReport .*,textReport true,' app/build.gradle
     - ./gradlew build || {
