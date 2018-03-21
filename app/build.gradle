@@ -39,6 +39,7 @@ android {
     buildToolsVersion '24.0.0'
 
     defaultConfig {
+        archivesBaseName = "F-DroidPrivilegedExtension"
         versionName getVersionName()
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
