@@ -38,6 +38,7 @@ GITVERSION=$(git describe --tags --always)
 
 FDROID_APK=F-Droid.apk
 PRIVEXT_APK=org.fdroid.fdroid.privileged_${VERSION}.apk
+FPE_NAME=F-DroidPrivilegedExtension
 
 # Collect files
 mkdir -p $TMP_DIR/META-INF/com/google/android/
@@ -50,21 +51,19 @@ if [ -z $BINARIES ] ; then
     ./gradlew assemble$(echo $VARIANT | tr 'dr' 'DR')
     OUT_DIR=$PROG_DIR/app/build/outputs/apk
     if [ $VARIANT == "debug" ]; then
-	cp $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}.apk \
-	   $TMP_DIR/F-DroidPrivilegedExtension.apk
-    elif [ -f $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}-signed.apk ]; then
-	cp $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}-signed.apk \
-	   $TMP_DIR/F-DroidPrivilegedExtension.apk
+	cp $OUT_DIR/$FPE_NAME-debug.apk $TMP_DIR/$FPE_NAME.apk
+    elif [ -f $OUT_DIR/$FPE_NAME-release.apk ]; then
+	cp $OUT_DIR/$FPE_NAME-release.apk $TMP_DIR/$FPE_NAME.apk
     else
-	cp $OUT_DIR/F-DroidPrivilegedExtension-${VARIANT}-unsigned.apk \
-	   $TMP_DIR/F-DroidPrivilegedExtension.apk
+        echo "No signed debug or release APK found in $OUT_DIR!"
+        exit 1
     fi
 else
 	curl -L https://f-droid.org/repo/$PRIVEXT_APK > $TMP_DIR/$PRIVEXT_APK
 	curl -L https://f-droid.org/repo/${PRIVEXT_APK}.asc > $TMP_DIR/${PRIVEXT_APK}.asc
 	$GPG --verify $TMP_DIR/${PRIVEXT_APK}.asc
 	rm $TMP_DIR/${PRIVEXT_APK}.asc
-	mv $TMP_DIR/$PRIVEXT_APK $TMP_DIR/F-DroidPrivilegedExtension.apk
+	mv $TMP_DIR/$PRIVEXT_APK $TMP_DIR/$FPE_NAME.apk
 fi
 
 # For both
@@ -72,13 +71,13 @@ curl -L https://f-droid.org/$FDROID_APK > $TMP_DIR/$FDROID_APK
 curl -L https://f-droid.org/${FDROID_APK}.asc > $TMP_DIR/${FDROID_APK}.asc
 $GPG --verify $TMP_DIR/${FDROID_APK}.asc
 rm $TMP_DIR/${FDROID_APK}.asc
-mv $TMP_DIR/$FDROID_APK $TMP_DIR/F-Droid.apk
+test -e $TMP_DIR/F-Droid.apk || mv $TMP_DIR/$FDROID_APK $TMP_DIR/F-Droid.apk
 
 # Make zip
 if [ -z $BINARIES ]; then
-	ZIPBASE=F-DroidPrivilegedExtension-${GITVERSION}
+	ZIPBASE=${FPE_NAME}-${GITVERSION}
 else
-	ZIPBASE=F-DroidPrivilegedExtensionFromBinaries-${GITVERSION}
+	ZIPBASE=${FPE_NAME}FromBinaries-${GITVERSION}
 fi
 if [ $VARIANT == "debug" ]; then
 	ZIP=${ZIPBASE}-debug.zip
