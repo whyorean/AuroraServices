@@ -29,6 +29,53 @@ PERM_DIR="/system/etc/permissions"
 PERM=permissions_org.fdroid.fdroid.privileged.xml
 ADDOND=80-fdroid.sh
 
+# mount and umount functions copied from
+# https://github.com/LineageOS/android_vendor_lineage/tree/1f94c931e041d8a664ac9f9f31a09028f4673cac/addonsu
+mount_system() {
+  if mount /system; then
+      return 0
+  fi
+
+  # Try to get the block from /etc/recovery.fstab
+  block=`cat /etc/recovery.fstab | cut -d '#' -f 1 | grep /system | grep -o '/dev/[^ ]*' | head -1`
+  if [ -n "$block" ] && mount $block /system; then
+      return 0
+  fi
+
+  # Modern devices use /system as root ("/")
+  system_as_root=`getprop ro.build.system_root_image`
+  if [ "$system_as_root" == "true" ]; then
+    active_slot=`getprop ro.boot.slot_suffix`
+    if [ ! -z "$active_slot" ]; then
+      block=/dev/block/bootdevice/by-name/system$active_slot
+    else
+      block=/dev/block/bootdevice/by-name/system
+    fi
+    mkdir -p /system_root
+    if mount -o rw $block /system_root && mount /system_root/system /system; then
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+umount_system() {
+  # Modern devices use /system as root ("/")
+  system_as_root=`getprop ro.build.system_root_image`
+  if [ "$system_as_root" == "true" ]; then
+    if umount /system && umount /system_root; then
+      return 0
+    fi
+  fi
+
+  if umount /system; then
+      return 0
+  fi
+
+  return 1
+}
+
 cd /tmp
 mkdir fdroid
 cd fdroid
@@ -41,7 +88,8 @@ then
   cp /cache/${PERM} .
 fi
 
-mount /system
+mount_system
+
 rm -f /system/app/FDroid*
 rm -f /system/app/FDroid*/*
 rm -f /system/priv-app/FDroid*
@@ -89,7 +137,7 @@ chmod 644 ${FDROIDDIR}/${FDROID}
 
 cp ${ADDOND} /system/addon.d/
 
-umount /system
+umount_system
 
 echo -n -e 'ui_print done\n' > /proc/self/fd/$2
 echo -n -e 'ui_print\n' > /proc/self/fd/$2
