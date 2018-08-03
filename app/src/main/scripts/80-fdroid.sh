@@ -1,5 +1,7 @@
 #!/sbin/sh
 #
+# ADDOND_VERSION=2
+#
 # /system/addon.d/80-fdroid.sh
 # During a system upgrade, this script backs up F-Droid client and privext,
 # /system is formatted and reinstalled, then the files are restored.
