@@ -1,107 +1,83 @@
 apply plugin: 'com.android.application'
-apply plugin: 'checkstyle'
 
-/* gets the version name from the latest Git tag, stripping the leading v off */
-def getVersionName = { ->
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'describe', '--tags', '--always'
-        standardOutput = stdout
-    }
-    return stdout.toString().trim()
-}
-
-gradle.allprojects {
-    ext.getVersionCode = { ->
-        def manifestFile = file("app/src/main/AndroidManifest.xml")
-        def pattern = Pattern.compile("versionCode=\"(\\d+)\"")
-        def manifestText = manifestFile.getText()
-        def matcher = pattern.matcher(manifestText)
-        matcher.find()
-        return Integer.parseInt(matcher.group(1))
-    }
-}
-
-repositories {
-    jcenter()
-}
+ext.minimumSdkVersion = 21
+ext.versionMajor = 1
+ext.versionMinor = 0
+ext.versionPatch = 0
+ext.versionClassifier = null
+ext.isSnapshot = true
+ext.isBeta = false
 
 dependencies {
-    testCompile 'junit:junit:4.12'
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.scottyab:rootbeer-lib:0.0.7'
 
-    androidTestCompile 'com.android.support:support-annotations:25.3.0'
-    androidTestCompile 'com.android.support.test:runner:0.5'
-    androidTestCompile 'com.android.support.test:rules:0.5'
+    //RXJava2
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+
+    implementation('com.jakewharton:butterknife:9.0.0-SNAPSHOT')
+            { exclude group: 'com.android.support' }
+    annotationProcessor 'com.jakewharton:butterknife-compiler:9.0.0-SNAPSHOT'
+
+    implementation 'com.github.Chainfire:libsuperuser:-SNAPSHOT'
 }
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '24.0.0'
+    compileSdkVersion 28
+    buildToolsVersion '28.0.2'
 
     defaultConfig {
-        archivesBaseName = "F-DroidPrivilegedExtension"
-        versionName getVersionName()
+        applicationId "com.aurora.services"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        minSdkVersion project.ext.minimumSdkVersion
+        targetSdkVersion 28
+
+        versionCode generateVersionCode()
+        versionName generateVersionName()
+
+        vectorDrawables.useSupportLibrary = true
+        multiDexEnabled true
     }
 
     compileOptions {
         compileOptions.encoding = "UTF-8"
-
-        // Use Java 1.7, requires minSdk 8
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
-    }
-
-    aaptOptions {
-        cruncherEnabled = false
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
     }
 
     buildTypes {
         all {
-            // Keep IPackageInstallObserver and IPackageDeleteObserver
-            minifyEnabled false
-            useProguard false
-            shrinkResources false
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            shrinkResources true
         }
     }
 
     lintOptions {
         checkReleaseBuilds false
         abortOnError true
-
-        htmlReport true
-        xmlReport false
-        textReport false
-
-        // this is never going to be a real "app"
-        disable 'GoogleAppIndexingWarning'
-    }
-
-    File signFile = rootProject.file('signing.properties')
-    if (signFile.exists()) {
-        Properties properties = new Properties()
-        properties.load(new FileInputStream(signFile))
-        signingConfigs {
-            release {
-                storeFile rootProject.file(properties['key.store'])
-                storePassword properties['key.store.password']
-                keyAlias properties['key.alias']
-                keyPassword properties['key.alias.password']
-            }
-        }
-        buildTypes.release.signingConfig signingConfigs.release
     }
 }
 
-checkstyle {
-    toolVersion = '7.1'
+private Integer generateVersionCode() {
+    return ext.minimumSdkVersion * 10000000 + ext.versionMajor * 10000 + ext.versionMinor * 100 + ext.versionPatch
 }
 
-task checkstyle(type: Checkstyle) {
-    configFile file("${project.rootDir}/config/checkstyle/checkstyle.xml")
-    source 'src/main/java'
-    include '**/*.java'
+private String generateVersionName() {
+    String versionName = "${ext.versionMajor}.${ext.versionMinor}.${ext.versionPatch}"
+    if (ext.versionClassifier == null) {
+        if (ext.isSnapshot)
+            ext.versionClassifier = "SNAPSHOT"
+        else if (ext.isBeta)
+            ext.versionClassifier = "β"
+        else
+            ext.versionClassifier = "α"
+    }
 
-    classpath = files()
+    if (ext.versionClassifier != null) {
+        versionName += "-" + ext.versionClassifier
+    }
+    return versionName
 }

@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">F-Droid Privileged Extension</string>
+    <string name="app_name">Aurora Services</string>
+    <string name="action_now">Yes</string>
+    <string name="action_later">Later</string>
+    <string name="action_convert">Convert</string>
+    <string name="action_remove_icon">Remove Icon</string>
 
+    <string name="perm_granted">Granted</string>
+    <string name="perm_not_granted">Not Granted</string>
+
+    <string name="status_su">SU Available</string>
+    <string name="status_bb">BusyBox Available</string>
+    <string name="status_rm">Root Manager Available</string>
+    <string name="status_sa">System Access Available</string>
+
+    <string name="system_status">Status</string>
+    <string name="system_permission">Permission</string>
+    <string name="system_summary">Aurora Services can be used to install apps in background via Aurora Store and F-Droid"</string>
+    <string name="system_summary_err">Aurora Services must be a system app in order to get privileged permission to install and uninstall apps."</string>
+
+    <string name="dialog_title">Promote Aurora Services</string>
+    <string name="dialog_msg">Changes will be applied after reboot.\nWant to proceed ?</string>
+    <string name="remove_dialog_title">Remove App Icon</string>
+    <string name="remove_dialog_msg">Aurora Services will be removed from your launcher, you can still access Aurora Services by dialing 287672 (Aurora).\nWant to proceed ?</string>
 </resources>
