@@ -2,13 +2,11 @@
 <resources>
     <string-array name="permission_names">
         <item>External Storage</item>
-        <item>Phone Calls</item>
         <item>Install Package</item>
         <item>Uninstall Package</item>
     </string-array>
     <string-array name="permission_values">
         <item>android.permission.WRITE_EXTERNAL_STORAGE</item>
-        <item>android.permission.PROCESS_OUTGOING_CALLS</item>
         <item>android.permission.INSTALL_PACKAGES</item>
         <item>android.permission.DELETE_PACKAGES</item>
     </string-array>

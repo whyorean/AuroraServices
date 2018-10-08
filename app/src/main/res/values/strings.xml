@@ -23,5 +23,5 @@
     <string name="dialog_title">Promote Aurora Services</string>
     <string name="dialog_msg">Changes will be applied after reboot.\nWant to proceed ?</string>
     <string name="remove_dialog_title">Remove App Icon</string>
-    <string name="remove_dialog_msg">Aurora Services will be removed from your launcher, you can still access Aurora Services by dialing 287672 (Aurora).\nWant to proceed ?</string>
+    <string name="remove_dialog_msg">Aurora Services icon will be removed from your launcher.\nWant to proceed ?</string>
 </resources>
