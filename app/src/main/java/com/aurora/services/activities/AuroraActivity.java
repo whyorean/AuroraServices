@@ -1,10 +1,10 @@
 package com.aurora.services.activities;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -13,19 +13,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.aurora.services.R;
-import com.aurora.services.adapters.PermissionAdapter;
-import com.aurora.services.dialogs.GenericDialog;
-import com.aurora.services.task.ConvertTask;
-import com.scottyab.rootbeer.RootBeer;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import com.aurora.services.R;
+import com.aurora.services.task.ConvertTask;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.scottyab.rootbeer.RootBeer;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import eu.chainfire.libsuperuser.Shell;
@@ -38,30 +36,22 @@ public class AuroraActivity extends AppCompatActivity {
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.permission_recycler)
-    RecyclerView permissionRecycler;
-    @BindView(R.id.button_convertApp)
-    Button convertApp;
-    @BindView(R.id.system_desc)
-    TextView systemDesc;
-    @BindView(R.id.status_su)
-    TextView status_su;
-    @BindView(R.id.status_bb)
-    TextView status_bb;
-    @BindView(R.id.status_sm)
-    TextView status_sm;
-    @BindView(R.id.status_sa)
-    TextView status_sa;
+    @BindView(R.id.btn_convert)
+    Button btnConvert;
+    @BindView(R.id.text_warning)
+    TextView textDesc;
+    @BindView(R.id.text_enabled)
+    TextView textEnabled;
+    @BindView(R.id.text_permission)
+    TextView textPermission;
 
-    private PermissionAdapter mPermissionAdapter;
-    private CompositeDisposable mDisposable = new CompositeDisposable();
+    private CompositeDisposable disposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_aurora);
         ButterKnife.bind(this);
-        setupRecycler();
         setupSystem();
         setSupportActionBar(toolbar);
     }
@@ -87,33 +77,29 @@ public class AuroraActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (mPermissionAdapter != null)
-            mPermissionAdapter.notifyDataSetChanged();
     }
 
     @Override
     protected void onDestroy() {
-        mDisposable.dispose();
+        disposable.dispose();
         super.onDestroy();
     }
 
-    private void setupRecycler() {
-        mPermissionAdapter = new PermissionAdapter(
-                this,
-                getResources().getStringArray(R.array.permission_names),
-                getResources().getStringArray(R.array.permission_values));
-        permissionRecycler.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        permissionRecycler.setAdapter(mPermissionAdapter);
-    }
 
     private void setupSystem() {
         checkBusyBoxRoot();
         if (isSystemApp()) {
-            status_sa.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_available, 0);
-            systemDesc.setText(getResources().getString(R.string.system_summary));
-            convertApp.setVisibility(View.GONE);
+            textEnabled.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_available, 0);
+            textDesc.setText(getResources().getString(R.string.system_summary));
+            btnConvert.setVisibility(View.GONE);
         } else {
-            convertApp.setOnClickListener(v -> showSystemDialog());
+            btnConvert.setOnClickListener(v -> showSystemDialog());
+        }
+
+        if (isPermissionGranted()) {
+            textPermission.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_available, 0);
+        } else {
+            askPermissions();
         }
     }
 
@@ -123,85 +109,74 @@ public class AuroraActivity extends AppCompatActivity {
     }
 
     private void checkBusyBoxRoot() {
-        RootBeer mRootBeer = new RootBeer(this);
-        boolean isRootAvail = mRootBeer.isRooted();
-        boolean isBusyBoxAvail = mRootBeer.checkForBusyBoxBinary();
-        boolean isSUManagerAvail = mRootBeer.detectRootManagementApps();
+        RootBeer rootBeer = new RootBeer(this);
+        boolean isRootAvail = rootBeer.isRooted();
+        boolean isSUManagerAvail = rootBeer.detectRootManagementApps();
 
-        if (isRootAvail)
-            status_su.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_available, 0);
-        if (isBusyBoxAvail)
-            status_bb.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_available, 0);
-        if (isSUManagerAvail)
-            status_sm.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_available, 0);
-
-        if (isRootAvail && isBusyBoxAvail)
-            convertApp.setEnabled(true);
-        else {
-            if (mRootBeer.isRootedWithoutBusyBoxCheck())
-                Log.i(getPackageName(), "BusyBox not available");
-            if (mRootBeer.checkForMagiskBinary())
-                Log.i(getPackageName(), "Magisk Binary Detected");
-        }
+        if (isRootAvail && isSUManagerAvail)
+            btnConvert.setEnabled(true);
     }
 
     private void initConversion() {
-        mDisposable.add(Observable.fromCallable(() -> new ConvertTask(this).convert())
+        disposable.add(Observable.fromCallable(() -> new ConvertTask(this)
+                .convert())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(success -> {
                     if (success) {
-                        Toast.makeText(this, "Successful", Toast.LENGTH_LONG).show();
-                        Shell.SU.run("reboot");
+                        Toast.makeText(this, "Successful", Toast.LENGTH_SHORT).show();
+                        Shell.Pool.SU.run("reboot");
                     } else
-                        Toast.makeText(this, "UnSuccessful", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show();
                 }));
     }
 
     private void showSystemDialog() {
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-        if (prev != null) {
-            ft.remove(prev);
-        }
-        ft.addToBackStack(null);
-        GenericDialog dialog = new GenericDialog();
-        dialog.setTitle(getResources().getString(R.string.dialog_title));
-        dialog.setMessage(getResources().getString(R.string.dialog_msg));
-        dialog.setPositiveButton(getResources().getString(R.string.action_now), v -> {
-            initConversion();
-            dialog.dismiss();
-        });
-        dialog.setNegativeButton(getResources().getString(R.string.action_later), v -> {
-            dialog.dismiss();
-        });
-        dialog.show(ft, "dialog");
+        MaterialAlertDialogBuilder mBuilder = new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.dialog_title))
+                .setMessage(getString(R.string.dialog_msg))
+                .setPositiveButton(getString(R.string.action_now), (dialog, which) -> {
+                    initConversion();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(getString(R.string.action_later), (dialog, which) -> {
+                    dialog.dismiss();
+                });
+        mBuilder.create();
+        mBuilder.show();
     }
 
     private void showRemoveDialog() {
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-        if (prev != null) {
-            ft.remove(prev);
-        }
-        ft.addToBackStack(null);
-        GenericDialog dialog = new GenericDialog();
-        dialog.setTitle(getResources().getString(R.string.remove_dialog_title));
-        dialog.setMessage(getResources().getString(R.string.remove_dialog_msg));
-        dialog.setPositiveButton(getResources().getString(R.string.action_now), v -> {
-            removeLauncherIcon();
-            dialog.dismiss();
-        });
-        dialog.setNegativeButton(getResources().getString(R.string.action_later), v -> {
-            dialog.dismiss();
-        });
-        dialog.show(ft, "dialog");
+        MaterialAlertDialogBuilder mBuilder = new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.dialog_title))
+                .setMessage(getString(R.string.remove_dialog_msg))
+                .setPositiveButton(getString(R.string.action_now), (dialog, which) -> {
+                    removeLauncherIcon();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(getString(R.string.action_later), (dialog, which) -> {
+                    dialog.dismiss();
+                });
+        mBuilder.create();
+        mBuilder.show();
     }
 
     private void removeLauncherIcon() {
-        PackageManager p = getPackageManager();
+        PackageManager packageManager = getPackageManager();
         ComponentName componentName = new ComponentName(this, getClass());
-        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        packageManager.setComponentEnabledSetting(componentName,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
     }
 
+    private boolean isPermissionGranted() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void askPermissions() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                1337);
+    }
 }

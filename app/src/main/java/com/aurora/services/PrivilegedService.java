@@ -37,14 +37,16 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
+import org.apache.commons.io.IOUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.List;
 
-/**
- * This service provides an API via AIDL IPC for the main F-Droid app to install/delete packages.
- */
 public class PrivilegedService extends Service {
 
     public static final String TAG = "PrivilegedExtension";
@@ -56,14 +58,87 @@ public class PrivilegedService extends Service {
             "android.permission.INSTALL_PACKAGES";
     private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";
 
+    private Context context = this;
     private AccessProtectionHelper accessProtectionHelper;
-
     private Method installMethod;
     private Method deleteMethod;
+    private IPrivilegedCallback iPrivilegedCallback;
 
-    private IPrivilegedCallback mCallback;
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final int returnCode = intent.getIntExtra(
+                    EXTRA_LEGACY_STATUS, PackageInstaller.STATUS_FAILURE);
+            final String packageName = intent.getStringExtra(
+                    PackageInstaller.EXTRA_PACKAGE_NAME);
+            try {
+                iPrivilegedCallback.handleResult(packageName, returnCode);
+            } catch (RemoteException e1) {
+                Log.e(TAG, "RemoteException", e1);
+            }
+        }
+    };
 
-    Context context = this;
+    private final IPrivilegedService.Stub binder = new IPrivilegedService.Stub() {
+        @Override
+        public boolean hasPrivilegedPermissions() {
+            boolean callerIsAllowed = accessProtectionHelper.isCallerAllowed();
+            return callerIsAllowed && hasPrivilegedPermissionsImpl();
+        }
+
+        @Override
+        public void installPackage(Uri packageURI, int flags, String installerPackageName,
+                                   IPrivilegedCallback callback) {
+            if (!accessProtectionHelper.isCallerAllowed()) {
+                return;
+            }
+
+            if (Build.VERSION.SDK_INT >= 24) {
+                doPackageStage(packageURI);
+                iPrivilegedCallback = callback;
+            } else {
+                installPackageImpl(packageURI, flags, installerPackageName, callback);
+            }
+        }
+
+        @Override
+        public void installSplitPackage(List<Uri> uriList, int flags, String installerPackageName,
+                                    IPrivilegedCallback callback) {
+            if (!accessProtectionHelper.isCallerAllowed()) {
+                return;
+            }
+            doSplitPackageStage(uriList);
+            iPrivilegedCallback = callback;
+        }
+
+        @Override
+        public void deletePackage(String packageName, int flags, IPrivilegedCallback callback) {
+            if (!accessProtectionHelper.isCallerAllowed()) {
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= 24) {
+                iPrivilegedCallback = callback;
+                final PackageManager pm = getPackageManager();
+                final PackageInstaller packageInstaller = pm.getPackageInstaller();
+
+                /*
+                 * The client app used to set this to F-Droid, but we need it to be set to
+                 * this package's package name to be able to uninstall from here.
+                 */
+                pm.setInstallerPackageName(packageName, "com.aurora.services");
+                // Create a PendingIntent and use it to generate the IntentSender
+                Intent broadcastIntent = new Intent(BROADCAST_ACTION_UNINSTALL);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                        context, // context
+                        0, // arbitary
+                        broadcastIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                packageInstaller.uninstall(packageName, pendingIntent.getIntentSender());
+            } else {
+                deletePackageImpl(packageName, flags, callback);
+            }
+        }
+    };
 
     private boolean hasPrivilegedPermissionsImpl() {
         boolean hasInstallPermission =
@@ -78,11 +153,9 @@ public class PrivilegedService extends Service {
 
     private void installPackageImpl(Uri packageURI, int flags, String installerPackageName,
                                     final IPrivilegedCallback callback) {
-        // Internal callback from the system
         IPackageInstallObserver.Stub installObserver = new IPackageInstallObserver.Stub() {
             @Override
-            public void packageInstalled(String packageName, int returnCode) throws RemoteException {
-                // forward this internal callback to our callback
+            public void packageInstalled(String packageName, int returnCode) {
                 try {
                     callback.handleResult(packageName, returnCode);
                 } catch (RemoteException e1) {
@@ -91,7 +164,6 @@ public class PrivilegedService extends Service {
             }
         };
 
-        // execute internal method
         try {
             installMethod.invoke(getPackageManager(), packageURI, installObserver,
                     flags, installerPackageName);
@@ -111,11 +183,9 @@ public class PrivilegedService extends Service {
             return;
         }
 
-        // Internal callback from the system
         IPackageDeleteObserver.Stub deleteObserver = new IPackageDeleteObserver.Stub() {
             @Override
-            public void packageDeleted(String packageName, int returnCode) throws RemoteException {
-                // forward this internal callback to our callback
+            public void packageDeleted(String packageName, int returnCode) {
                 try {
                     callback.handleResult(packageName, returnCode);
                 } catch (RemoteException e1) {
@@ -137,25 +207,6 @@ public class PrivilegedService extends Service {
         }
     }
 
-    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final int returnCode = intent.getIntExtra(
-                    EXTRA_LEGACY_STATUS, PackageInstaller.STATUS_FAILURE);
-            final String packageName = intent.getStringExtra(
-                    PackageInstaller.EXTRA_PACKAGE_NAME);
-            try {
-                mCallback.handleResult(packageName, returnCode);
-            } catch (RemoteException e1) {
-                Log.e(TAG, "RemoteException", e1);
-            }
-        }
-    };
-
-    /**
-    * Below function is copied mostly as-is from
-    * https://android.googlesource.com/platform/packages/apps/PackageInstaller/+/06163dec5a23bb3f17f7e6279f6d46e1851b7d16
-    */
     @TargetApi(24)
     private void doPackageStage(Uri packageURI) {
         final PackageManager pm = getPackageManager();
@@ -176,8 +227,8 @@ public class PrivilegedService extends Service {
                 }
                 session.fsync(out);
             } finally {
-                IoUtils.closeQuietly(in);
-                IoUtils.closeQuietly(out);
+                Utils.closeQuietly(in);
+                Utils.closeQuietly(out);
             }
             // Create a PendingIntent and use it to generate the IntentSender
             Intent broadcastIntent = new Intent(BROADCAST_ACTION_INSTALL);
@@ -191,60 +242,41 @@ public class PrivilegedService extends Service {
             Log.d(TAG, "Failure", e);
             Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } finally {
-            IoUtils.closeQuietly(session);
+            Utils.closeQuietly(session);
         }
     }
 
-    private final IPrivilegedService.Stub binder = new IPrivilegedService.Stub() {
-        @Override
-        public boolean hasPrivilegedPermissions() {
-            boolean callerIsAllowed = accessProtectionHelper.isCallerAllowed();
-            return callerIsAllowed && hasPrivilegedPermissionsImpl();
+    private void doSplitPackageStage(List<Uri> uriList) {
+        final PackageManager packageManager = getPackageManager();
+        final PackageInstaller packageInstaller = packageManager.getPackageInstaller();
+        try {
+            final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            final int sessionId = packageInstaller.createSession(params);
+            final PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+            for (Uri uri : uriList) {
+                final File file = new File(uri.getPath());
+                final InputStream inputStream = new FileInputStream(file);
+                final OutputStream outputStream = session.openWrite(file.getName(), 0, file.length());
+                IOUtils.copy(inputStream, outputStream);
+                session.fsync(outputStream);
+                Utils.closeQuietly(inputStream);
+                Utils.closeQuietly(outputStream);
+            }
+
+            Intent callbackIntent = new Intent(BROADCAST_ACTION_INSTALL);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    sessionId,
+                    callbackIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            session.commit(pendingIntent.getIntentSender());
+            Utils.closeQuietly(session);
+        } catch (IOException e) {
+            Log.d(TAG, "Failure", e);
+            Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
-
-        @Override
-        public void installPackage(Uri packageURI, int flags, String installerPackageName,
-                                   IPrivilegedCallback callback) {
-            if (!accessProtectionHelper.isCallerAllowed()) {
-                return;
-            }
-
-            if (Build.VERSION.SDK_INT >= 24) {
-                doPackageStage(packageURI);
-                mCallback = callback;
-            } else {
-                installPackageImpl(packageURI, flags, installerPackageName, callback);
-            }
-        }
-
-        @Override
-        public void deletePackage(String packageName, int flags, IPrivilegedCallback callback) {
-            if (!accessProtectionHelper.isCallerAllowed()) {
-                return;
-            }
-            if (Build.VERSION.SDK_INT >= 24) {
-                mCallback = callback;
-                final PackageManager pm = getPackageManager();
-                final PackageInstaller packageInstaller = pm.getPackageInstaller();
-
-                /*
-                * The client app used to set this to F-Droid, but we need it to be set to
-                * this package's package name to be able to uninstall from here.
-                */
-                pm.setInstallerPackageName(packageName, "com.aurora.services");
-                // Create a PendingIntent and use it to generate the IntentSender
-                Intent broadcastIntent = new Intent(BROADCAST_ACTION_UNINSTALL);
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                        context, // context
-                        0, // arbitary
-                        broadcastIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
-                packageInstaller.uninstall(packageName, pendingIntent.getIntentSender());
-            } else {
-                deletePackageImpl(packageName, flags, callback);
-            }
-        }
-    };
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -254,10 +286,7 @@ public class PrivilegedService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
         accessProtectionHelper = new AccessProtectionHelper(this);
-
-        // get internal methods via reflection
         try {
             Class<?>[] installTypes = {
                     Uri.class, IPackageInstallObserver.class, int.class,
@@ -268,9 +297,9 @@ public class PrivilegedService extends Service {
                     int.class,
             };
 
-            PackageManager pm = getPackageManager();
-            installMethod = pm.getClass().getMethod("installPackage", installTypes);
-            deleteMethod = pm.getClass().getMethod("deletePackage", deleteTypes);
+            PackageManager packageManager = getPackageManager();
+            installMethod = packageManager.getClass().getMethod("installPackage", installTypes);
+            deleteMethod = packageManager.getClass().getMethod("deletePackage", deleteTypes);
         } catch (NoSuchMethodException e) {
             Log.e(TAG, "Android not compatible!", e);
             stopSelf();
@@ -279,11 +308,11 @@ public class PrivilegedService extends Service {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_ACTION_INSTALL);
         registerReceiver(
-                mBroadcastReceiver, intentFilter, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
+                broadcastReceiver, intentFilter, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
         IntentFilter intentFilter2 = new IntentFilter();
         intentFilter2.addAction(BROADCAST_ACTION_UNINSTALL);
         registerReceiver(
-                mBroadcastReceiver, intentFilter2, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
+                broadcastReceiver, intentFilter2, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
     }
 
     /**
@@ -302,7 +331,6 @@ public class PrivilegedService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mBroadcastReceiver);
+        unregisterReceiver(broadcastReceiver);
     }
-
 }

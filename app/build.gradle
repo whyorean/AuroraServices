@@ -1,57 +1,49 @@
 apply plugin: 'com.android.application'
 
-ext.minimumSdkVersion = 21
-ext.versionMajor = 1
-ext.versionMinor = 1
-ext.versionPatch = 0
-ext.versionClassifier = null
-ext.isSnapshot = true
-ext.isBeta = false
-
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta1'
+    implementation 'com.google.android.material:material:1.1.0-alpha07'
+
+    //Utils
     implementation 'com.scottyab:rootbeer-lib:0.0.7'
 
-    //RXJava2
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+    //RX-Java2
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.8'
 
-    implementation('com.jakewharton:butterknife:9.0.0-SNAPSHOT')
-            { exclude group: 'com.android.support' }
-    annotationProcessor 'com.jakewharton:butterknife-compiler:9.0.0-SNAPSHOT'
+    //ButterKnife
+    implementation 'com.jakewharton:butterknife:10.1.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
 
     implementation 'com.github.Chainfire:libsuperuser:-SNAPSHOT'
 }
 
 android {
     compileSdkVersion 28
-    buildToolsVersion '28.0.2'
 
     defaultConfig {
         applicationId "com.aurora.services"
 
-        minSdkVersion project.ext.minimumSdkVersion
+        minSdkVersion 21
         targetSdkVersion 28
 
-        versionCode generateVersionCode()
-        versionName generateVersionName()
+        versionCode 1
+        versionName "1.0.1"
 
         vectorDrawables.useSupportLibrary = true
-        multiDexEnabled true
     }
 
     compileOptions {
-        compileOptions.encoding = "UTF-8"
-        targetCompatibility 1.8
-        sourceCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildTypes {
         all {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            shrinkResources true
         }
     }
 
@@ -59,25 +51,4 @@ android {
         checkReleaseBuilds false
         abortOnError true
     }
-}
-
-private Integer generateVersionCode() {
-    return ext.minimumSdkVersion * 10000000 + ext.versionMajor * 10000 + ext.versionMinor * 100 + ext.versionPatch
-}
-
-private String generateVersionName() {
-    String versionName = "${ext.versionMajor}.${ext.versionMinor}.${ext.versionPatch}"
-    if (ext.versionClassifier == null) {
-        if (ext.isSnapshot)
-            ext.versionClassifier = "SNAPSHOT"
-        else if (ext.isBeta)
-            ext.versionClassifier = "β"
-        else
-            ext.versionClassifier = "α"
-    }
-
-    if (ext.versionClassifier != null) {
-        versionName += "-" + ext.versionClassifier
-    }
-    return versionName
 }

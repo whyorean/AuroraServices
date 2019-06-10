@@ -16,24 +16,29 @@
 
 package com.aurora.services;
 
-import android.annotation.TargetApi;
+import java.io.Closeable;
+import java.io.IOException;
 
-public final class IoUtils {
-    private IoUtils() {
-    }
+public final class Utils {
 
-    /**
-     * Closes 'closeable', ignoring any checked exceptions. Does nothing if 'closeable' is null.
-     */
-    @TargetApi(24)
-    public static void closeQuietly(AutoCloseable closeable) {
-        if (closeable != null) {
-            try {
+    public static void closeQuietly(final Closeable closeable) {
+        try {
+            if (closeable != null) {
                 closeable.close();
-            } catch (RuntimeException rethrown) {
-                throw rethrown;
-            } catch (Exception ignored) {
             }
+        } catch (final IOException ioe) {
+            // ignore
         }
     }
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
 }

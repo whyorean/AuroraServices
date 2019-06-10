@@ -10,18 +10,14 @@
     <string name="perm_granted">Granted</string>
     <string name="perm_not_granted">Not Granted</string>
 
-    <string name="status_su">SU Available</string>
-    <string name="status_bb">BusyBox Available</string>
-    <string name="status_rm">Root Manager Available</string>
-    <string name="status_sa">System Access Available</string>
+    <string name="status_se">Service enabled</string>
+    <string name="status_pm">Permissions granted</string>
 
     <string name="system_status">Status</string>
-    <string name="system_permission">Permission</string>
-    <string name="system_summary">Aurora Services can be used to install apps in background via Aurora Store and F-Droid"</string>
+    <string name="system_summary">Aurora Services can be used to install apps in background via Aurora Store and Aurora-Droid"</string>
     <string name="system_summary_err">Aurora Services must be a system app in order to get privileged permission to install and uninstall apps."</string>
 
-    <string name="dialog_title">Promote Aurora Services</string>
-    <string name="dialog_msg">Changes will be applied after reboot.\nWant to proceed ?</string>
-    <string name="remove_dialog_title">Remove App Icon</string>
-    <string name="remove_dialog_msg">Aurora Services icon will be removed from your launcher.\nWant to proceed ?</string>
+    <string name="dialog_title">Aurora Services</string>
+    <string name="dialog_msg">Do you wish to push Aurora Services to system apps ?</string>
+    <string name="remove_dialog_msg">Do you wish to remove Aurora Services icon from your launcher ?</string>
 </resources>

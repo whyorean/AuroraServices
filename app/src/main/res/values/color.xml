@@ -2,8 +2,14 @@
 <resources>
     <!-- primary palette -->
     <color name="colorAccent">@color/colorBlue</color>
-    <color name="colorPrimary">#4768FD</color>
-    <color name="colorPrimaryDark">#3f5de2</color>
+    <color name="colorPrimary">@color/colorBlue</color>
+    <color name="colorPrimaryDark">#EEE</color>
+    <color name="colorPrimaryVariant">@color/colorWhite</color>
+    <color name="colorSecondary">@color/colorPrimary</color>
+    <color name="colorSecondaryVariant">@color/colorWhite</color>
+    <color name="colorBackground">@color/colorWhite</color>
+    <color name="colorWindowBackground">@color/colorBackground</color>
+    <color name="colorNavigation">@color/colorPrimaryDark</color>
 
     <color name="colorWhite">#ffffff</color>
     <color name="colorWhiteAlt">#F5F5F5</color>
@@ -13,6 +19,7 @@
     <color name="colorTextPrimary">#000000</color>
     <color name="colorTextSecondary">#545454</color>
     <color name="colorScrim">#33000000</color>
+    <color name="colorStroke">#20000000</color>
 
     <!--More Colors-->
     <color name="colorBlue">#4768FD</color>

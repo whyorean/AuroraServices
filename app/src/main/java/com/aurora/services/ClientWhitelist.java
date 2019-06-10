@@ -26,17 +26,16 @@ import java.util.HashSet;
  * can access the Privileged Extension!
  * <ol>
  * <li>Get SHA-256 of certificate as lowercase without colons with
- * <code>keytool -list -printcert -jarfile com.example.apk | sed -n 's,SHA256:\s*\([A-F0-9:]*\),\1,p' | sed 's,:,,g'
- * | tr A-f a-f</code></li>
+ * <code> keytool -printcert -jarfile com.example.apk | sed -n 's,SHA256:\s*\([A-F0-9:]*\),\1,p' | sed 's,:,,g' | tr A-f a-f </code>
+ * </li>
  * <li>Add here with Application ID</li>
  * </ol>
  */
 public class ClientWhitelist {
 
     public static HashSet<Pair<String, String>> whitelist = new HashSet<>(Arrays.asList(
-            // certificate SHA-256 of https//f-droid.org/F-Droid.apk
-            new Pair<>("org.fdroid.fdroid", "43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab"),
-            new Pair<>("com.dragons.aurora", "4c626157ad02bda3401a7263555f68a79663fc3e13a4d4369a12570941aa280f")
+            new Pair<>("com.aurora.store", "4c626157ad02bda3401a7263555f68a79663fc3e13a4d4369a12570941aa280f"),
+            new Pair<>("com.aurora.store", "a695e9907944d2ec0736c379fa191e64f1d93e4a8e1fcf2f3b8c8a9b0eee2cfa"),
+            new Pair<>("com.aurora.adroid", "4c626157ad02bda3401a7263555f68a79663fc3e13a4d4369a12570941aa280f")
     ));
-
 }

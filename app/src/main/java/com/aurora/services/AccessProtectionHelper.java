@@ -35,55 +35,41 @@ import java.util.HashSet;
 
 public class AccessProtectionHelper {
 
-    Context context;
-    PackageManager pm;
-    HashSet<Pair<String, String>> whitelist;
+    private PackageManager packageManager;
+    private HashSet<Pair<String, String>> whitelist;
 
-    AccessProtectionHelper(Context context) {
+    public AccessProtectionHelper(Context context) {
         this(context, ClientWhitelist.whitelist);
     }
 
-    AccessProtectionHelper(Context context, HashSet<Pair<String, String>> whitelist) {
-        this.context = context;
-        this.pm = context.getPackageManager();
+    public AccessProtectionHelper(Context context, HashSet<Pair<String, String>> whitelist) {
+        this.packageManager = context.getPackageManager();
         this.whitelist = whitelist;
     }
 
-    /**
-     * Checks if process that binds to this service (i.e. the package name corresponding to the
-     * process) is in the whitelist.
-     *
-     * @return true if process is allowed to use this service
-     */
+
     public boolean isCallerAllowed() {
         return isUidAllowed(Binder.getCallingUid());
     }
 
     private boolean isUidAllowed(int uid) {
-        String[] callingPackages = pm.getPackagesForUid(uid);
+        String[] callingPackages = packageManager.getPackagesForUid(uid);
         if (callingPackages == null) {
             throw new RuntimeException("Should not happen. No packages associated to caller UID!");
         }
-
-        // is calling package allowed to use this service?
-        // NOTE: No support for sharedUserIds
-        // callingPackages contains more than one entry when sharedUserId has been used
-        // No plans to support sharedUserIds due to many bugs connected to them:
-        // http://java-hamster.blogspot.de/2010/05/androids-shareduserid.html
         String currentPkg = callingPackages[0];
         return isPackageAllowed(currentPkg);
     }
 
-    public boolean isPackageAllowed(String packageName) {
+    private boolean isPackageAllowed(String packageName) {
         Log.d(PrivilegedService.TAG, "Checking if package is allowed to access privileged extension: " + packageName);
-
         try {
             byte[] currentPackageCert = getPackageCertificate(packageName);
 
             for (Pair whitelistEntry : whitelist) {
                 String whitelistPackageName = (String) whitelistEntry.first;
                 String whitelistHashString = (String) whitelistEntry.second;
-                byte[] whitelistHash = hexStringToByteArray(whitelistHashString);
+                byte[] whitelistHash = Utils.hexStringToByteArray(whitelistHashString);
 
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] packageHash = digest.digest(currentPackageCert);
@@ -109,34 +95,16 @@ public class AccessProtectionHelper {
 
     private byte[] getPackageCertificate(String packageName) {
         try {
-            // we do check the byte array of *all* signatures
             @SuppressLint("PackageManagerGetSignatures")
-            PackageInfo pkgInfo = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
-
-            // NOTE: Silly Android API naming: Signatures are actually certificates
+            PackageInfo pkgInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
             Signature[] certificates = pkgInfo.signatures;
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             for (Signature cert : certificates) {
                 outputStream.write(cert.toByteArray());
             }
-
-            // Even if an apk has several certificates, these certificates should never change
-            // Google Play does not allow the introduction of new certificates into an existing apk
-            // Also see this attack: http://stackoverflow.com/a/10567852
             return outputStream.toByteArray();
         } catch (PackageManager.NameNotFoundException | IOException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
-
-    private static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
 }

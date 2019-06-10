@@ -20,22 +20,20 @@ public class ConvertTask {
     static private final String MOUNT_RO = "mount -o ro,remount,ro /system";
     static private final String PRIVATE_APP_PATH = "/system/priv-app/";
     static private final String PERMISSION_PATH = "/system/etc/permissions/";
-    static private final String PKG_NAME = "AuroraServices";
+    static private final String PKG_NAME = "AuroraServices.apk";
     static private final String PERM_NAME = "permissions_com.aurora.services.xml";
-    static private final String PKG_EXT = ".apk";
-    static private final String BUSYBOX = "busybox";
 
-    private List<String> suResult = new ArrayList<>();
-    private Context mContext;
+    private List<String> resultList = new ArrayList<>();
+    private Context context;
 
     public ConvertTask(Context mContext) {
-        this.mContext = mContext;
+        this.context = mContext;
     }
 
     public boolean convert() {
         if (Shell.SU.available()) {
-            suResult.clear();
-            suResult = Shell.SU.run(getCommands());
+            resultList.clear();
+            resultList = Shell.SU.run(getCommands());
             return true;
         } else
             return false;
@@ -43,41 +41,41 @@ public class ConvertTask {
 
     private List<String> getCommands() {
         List<String> commands = new ArrayList<>();
-        String from = mContext.getPackageResourcePath();
+        String from = context.getPackageResourcePath();
         String apkPath = getAPKPath();
         String permPath = getPermissionPath() + PERM_NAME;
         String apkDir = new File(apkPath).getParent();
 
         //Mount system as RW
-        commands.add(getBusyboxCommand(MOUNT_RW));
+        commands.add(MOUNT_RW);
 
         //Create APK Directory in priv-apps
-        commands.add(getBusyboxCommand("mkdir " + apkDir));
-        commands.add(getBusyboxCommand("chmod 755 " + apkDir));
+        commands.add("mkdir " + apkDir);
+        commands.add("chmod 755 " + apkDir);
 
         //Copy APK and give permissions
-        commands.add(getBusyboxCommand("cp " + from + " " + apkPath));
-        commands.add(getBusyboxCommand("chmod 644 " + apkPath));
+        commands.add("cp " + from + " " + apkPath);
+        commands.add("chmod 644 " + apkPath);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             //Copy Whitelist permissions
-            commands.add(getBusyboxCommand("cp " + getPermissionFromAsset() + " " + permPath));
-            commands.add(getBusyboxCommand("chmod 644 " + permPath));
+            commands.add("cp " + getPermissionFromAsset() + " " + permPath);
+            commands.add("chmod 644 " + permPath);
 
-            commands.add(getBusyboxCommand("chown system " + apkPath));
-            commands.add(getBusyboxCommand("chgrp system " + apkPath));
+            commands.add("chown system " + apkPath);
+            commands.add("chgrp system " + apkPath);
         }
 
         //Mount system as RO
-        commands.add(getBusyboxCommand(MOUNT_RO));
+        commands.add(MOUNT_RO);
         return commands;
     }
 
     private String getAPKPath() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return PRIVATE_APP_PATH + PKG_NAME + File.separator + PKG_NAME + PKG_EXT;
+            return PRIVATE_APP_PATH + PKG_NAME + "/" + PKG_NAME;
         } else {
-            return PRIVATE_APP_PATH + PKG_NAME + PKG_EXT;
+            return PRIVATE_APP_PATH + PKG_NAME;
         }
     }
 
@@ -87,16 +85,16 @@ public class ConvertTask {
 
     private String getPermissionFromAsset() {
         try {
-            InputStream in = mContext.getAssets().open(PERM_NAME);
-            File outFile = new File(mContext.getFilesDir().getPath(), PERM_NAME);
+            InputStream in = context.getAssets().open(PERM_NAME);
+            File outFile = new File(context.getFilesDir().getPath(), PERM_NAME);
             OutputStream out = new FileOutputStream(outFile);
             copyFile(in, out);
             in.close();
             out.flush();
             out.close();
-            return mContext.getFilesDir().getPath() + File.separator + PERM_NAME;
+            return context.getFilesDir().getPath() + "/" + PERM_NAME;
         } catch (IOException e) {
-            Log.e("AuroraAsset", "Failed to copy permission file", e);
+            Log.e("Aurora Services", "Failed to copy permission file", e);
             return "";
         }
     }
@@ -107,10 +105,6 @@ public class ConvertTask {
         while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
         }
-    }
-
-    protected String getBusyboxCommand(String command) {
-        return BUSYBOX + " " + command;
     }
 
 }

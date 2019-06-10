@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="permission_names">
-        <item>External Storage</item>
         <item>Install Package</item>
         <item>Uninstall Package</item>
     </string-array>
     <string-array name="permission_values">
-        <item>android.permission.WRITE_EXTERNAL_STORAGE</item>
         <item>android.permission.INSTALL_PACKAGES</item>
         <item>android.permission.DELETE_PACKAGES</item>
     </string-array>

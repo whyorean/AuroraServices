@@ -43,6 +43,8 @@ interface IPrivilegedService {
     oneway void installPackage(in Uri packageURI, in int flags, in String installerPackageName,
                         in IPrivilegedCallback callback);
 
+    oneway void installSplitPackage(in List<Uri> listURI, in int flags, in String installerPackageName,
+                        in IPrivilegedCallback callback);
 
     /**
      * - Docs based on PackageManager.deletePackage()

@@ -13,29 +13,7 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?actionBarSize"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:fontFamily="@font/source_sans_pro"
-                    android:letterSpacing=".0175"
-                    android:text="@string/app_name"
-                    android:textAppearance="@style/TextAppearance.Aurora.Toolbar.Title"
-                    android:textColor="@color/colorWhite"
-                    android:textSize="24sp" />
-            </RelativeLayout>
-
-
-        </androidx.appcompat.widget.Toolbar>
-
+            android:layout_height="?actionBarSize" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
@@ -45,8 +23,6 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <include layout="@layout/include_status" />
-
-        <include layout="@layout/include_permission" />
 
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
