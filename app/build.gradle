@@ -3,7 +3,6 @@ apply plugin: 'com.android.application'
 dependencies {
     implementation group: 'commons-io', name: 'commons-io', version: '2.6'
     implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta1'
     implementation 'com.google.android.material:material:1.1.0-alpha07'
 
     //Utils
