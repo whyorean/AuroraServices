@@ -67,10 +67,8 @@ public class PrivilegedService extends Service {
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            final int returnCode = intent.getIntExtra(
-                    EXTRA_LEGACY_STATUS, PackageInstaller.STATUS_FAILURE);
-            final String packageName = intent.getStringExtra(
-                    PackageInstaller.EXTRA_PACKAGE_NAME);
+            final int returnCode = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1);
+            final String packageName = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME);
             try {
                 iPrivilegedCallback.handleResult(packageName, returnCode);
             } catch (RemoteException e1) {
