@@ -35,8 +35,8 @@ public class ClientWhitelist {
 
     public static HashSet<Pair<String, String>> whitelist = new HashSet<>(Arrays.asList(
             new Pair<>("com.aurora.store", "4c626157ad02bda3401a7263555f68a79663fc3e13a4d4369a12570941aa280f"),
-            new Pair<>("com.aurora.store", "a695e9907944d2ec0736c379fa191e64f1d93e4a8e1fcf2f3b8c8a9b0eee2cfa"),
+            new Pair<>("com.aurora.store", "5c83c7672b929955dc0a1db89a5e6ae4389e2eae7ec939956041694e5815f532"),
             new Pair<>("com.aurora.adroid", "4c626157ad02bda3401a7263555f68a79663fc3e13a4d4369a12570941aa280f"),
-            new Pair<>("com.aurora.adroid", "a695e9907944d2ec0736c379fa191e64f1d93e4a8e1fcf2f3b8c8a9b0eee2cfa")
+            new Pair<>("com.aurora.adroid", "b5315cb1906a87020fb7f2c344ceaf21068f0aade0b38ada32e7f65b624f0a3b")
     ));
 }
