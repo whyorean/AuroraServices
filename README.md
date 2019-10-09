@@ -29,6 +29,10 @@ Aurora Services is currently in developement, but all features listed here work 
 3. Open Aurora Store / Droid and enable Aurora Services as the installation method.
    - `Settings -> Installations -> Installation method -> Aurora Services`
 
+# Screenshot
+
+<img src="https://i.imgur.com/kBxIfzR.jpg" width="300">
+
 # Links
 
 * Support Group - [Telegram](https://t.me/AuroraDroid)
