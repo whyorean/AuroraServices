@@ -23,6 +23,7 @@ Aurora Services is currently in developement, but all features listed here work 
 
 1. Install Aurora Services as a system app.
    - You need to either manually push [the APK](https://gitlab.com/AuroraOSS/AuroraServices/-/releases) to `/system/priv-app`, or install the [Magisk module](https://gitlab.com/AuroraOSS/AuroraServices/-/releases). Both are available from the GitLab releases page.
+   - Also if you manually push apk to `/system/priv-app`, you need to push [permissions_com.aurora.services.xml](https://gitlab.com/AuroraOSS/AuroraServices/raw/master/app/src/main/assets/permissions_com.aurora.services.xml) to  `/system/etc/permissions/`
 
 2. Provided you have rebooted your device, open Aurora Services and follow the setup instructions, granting the required permissions.
 
