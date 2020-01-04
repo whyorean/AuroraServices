@@ -34,10 +34,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 import android.widget.Toast;
 
-import org.apache.commons.io.IOUtils;
+import com.aurora.services.manager.LogManager;
+import com.aurora.services.utils.CommonUtils;
+import com.aurora.services.utils.IOUtils;
+import com.aurora.services.utils.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,19 +51,13 @@ import java.util.List;
 
 public class PrivilegedService extends Service {
 
-    public static final String TAG = "PrivilegedExtension";
-    private static final String BROADCAST_ACTION_INSTALL =
-            "com.aurora.services.ACTION_INSTALL_COMMIT";
-    private static final String BROADCAST_ACTION_UNINSTALL =
-            "com.aurora.services.ACTION_UNINSTALL_COMMIT";
-    private static final String BROADCAST_SENDER_PERMISSION =
-            "android.permission.INSTALL_PACKAGES";
-    private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";
+    public static PrivilegedService instance = null;
 
-    private Context context = this;
-    private AccessProtectionHelper accessProtectionHelper;
+    private AccessProtectionHelper helper;
+    private LogManager logManager;
     private Method installMethod;
     private Method deleteMethod;
+
     private IPrivilegedCallback iPrivilegedCallback;
 
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -70,24 +66,27 @@ public class PrivilegedService extends Service {
             final int returnCode = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1);
             final String packageName = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME);
             try {
+                if (returnCode == 0)
+                    logManager.addToStats(packageName);
                 iPrivilegedCallback.handleResult(packageName, returnCode);
             } catch (RemoteException e1) {
-                Log.e(TAG, "RemoteException", e1);
+                Log.e("RemoteException -> %s", e1);
             }
         }
     };
 
     private final IPrivilegedService.Stub binder = new IPrivilegedService.Stub() {
+
         @Override
         public boolean hasPrivilegedPermissions() {
-            boolean callerIsAllowed = accessProtectionHelper.isCallerAllowed();
+            boolean callerIsAllowed = helper.isCallerAllowed();
             return callerIsAllowed && hasPrivilegedPermissionsImpl();
         }
 
         @Override
         public void installPackage(Uri packageURI, int flags, String installerPackageName,
                                    IPrivilegedCallback callback) {
-            if (!accessProtectionHelper.isCallerAllowed()) {
+            if (!helper.isCallerAllowed()) {
                 return;
             }
 
@@ -101,36 +100,36 @@ public class PrivilegedService extends Service {
 
         @Override
         public void installSplitPackage(List<Uri> uriList, int flags, String installerPackageName,
-                                    IPrivilegedCallback callback) {
-            if (!accessProtectionHelper.isCallerAllowed()) {
+                                        IPrivilegedCallback callback) {
+            if (!helper.isCallerAllowed()) {
                 return;
             }
+
             doSplitPackageStage(uriList);
             iPrivilegedCallback = callback;
         }
 
         @Override
         public void deletePackage(String packageName, int flags, IPrivilegedCallback callback) {
-            if (!accessProtectionHelper.isCallerAllowed()) {
+
+            if (!helper.isCallerAllowed()) {
                 return;
             }
+
             if (Build.VERSION.SDK_INT >= 24) {
                 iPrivilegedCallback = callback;
-                final PackageManager pm = getPackageManager();
-                final PackageInstaller packageInstaller = pm.getPackageInstaller();
+                final PackageManager packageManager = getPackageManager();
+                final PackageInstaller packageInstaller = packageManager.getPackageInstaller();
 
-                /*
-                 * The client app used to set this to F-Droid, but we need it to be set to
-                 * this package's package name to be able to uninstall from here.
-                 */
-                pm.setInstallerPackageName(packageName, "com.aurora.services");
-                // Create a PendingIntent and use it to generate the IntentSender
-                Intent broadcastIntent = new Intent(BROADCAST_ACTION_UNINSTALL);
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                        context, // context
-                        0, // arbitary
-                        broadcastIntent,
+                packageManager.setInstallerPackageName(packageName, "com.aurora.services");
+
+                final Intent uninstallIntent = new Intent(Constants.BROADCAST_ACTION_UNINSTALL);
+                final PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                        PrivilegedService.this,
+                        0,
+                        uninstallIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT);
+
                 packageInstaller.uninstall(packageName, pendingIntent.getIntentSender());
             } else {
                 deletePackageImpl(packageName, flags, callback);
@@ -138,46 +137,171 @@ public class PrivilegedService extends Service {
         }
     };
 
-    private boolean hasPrivilegedPermissionsImpl() {
-        boolean hasInstallPermission =
-                getPackageManager().checkPermission(Manifest.permission.INSTALL_PACKAGES, getPackageName())
-                        == PackageManager.PERMISSION_GRANTED;
-        boolean hasDeletePermission =
-                getPackageManager().checkPermission(Manifest.permission.DELETE_PACKAGES, getPackageName())
-                        == PackageManager.PERMISSION_GRANTED;
+    public static boolean isAvailable() {
+        try {
+            return instance != null;
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        instance = this;
+        helper = new AccessProtectionHelper(this);
+        logManager = new LogManager(this);
+
+        if (Build.VERSION.SDK_INT < 24) {
+            try {
+                Class<?>[] installTypes = {
+                        Uri.class, IPackageInstallObserver.class, int.class,
+                        String.class,
+                };
+                Class<?>[] deleteTypes = {
+                        String.class, IPackageDeleteObserver.class,
+                        int.class,
+                };
+
+                final PackageManager packageManager = getPackageManager();
+                installMethod = packageManager.getClass().getMethod("installPackage", installTypes);
+                deleteMethod = packageManager.getClass().getMethod("deletePackage", deleteTypes);
+            } catch (NoSuchMethodException e) {
+                Log.e("Android not compatible! -> %s", e.getMessage());
+                stopSelf();
+            }
+        }
+
+        final IntentFilter installIntent = new IntentFilter();
+        installIntent.addAction(Constants.BROADCAST_ACTION_INSTALL);
+
+        final IntentFilter uninstallIntent = new IntentFilter();
+        uninstallIntent.addAction(Constants.BROADCAST_ACTION_UNINSTALL);
+
+        registerReceiver(broadcastReceiver, installIntent, Constants.BROADCAST_SENDER_PERMISSION, null);
+        registerReceiver(broadcastReceiver, uninstallIntent, Constants.BROADCAST_SENDER_PERMISSION, null);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
+    @TargetApi(24)
+    private void doPackageStage(Uri uri) {
+        final PackageManager packageManager = getPackageManager();
+        final PackageInstaller packageInstaller = packageManager.getPackageInstaller();
+        final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+
+        try {
+            final byte[] buffer = new byte[65536];
+            final int sessionId = packageInstaller.createSession(params);
+            final PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+            final InputStream inputStream = getContentResolver().openInputStream(uri);
+            final OutputStream outputStream = session.openWrite("PackageInstaller",
+                    0,
+                    -1);
+            try {
+                int c;
+                while ((c = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, c);
+                }
+                session.fsync(outputStream);
+            } finally {
+                CommonUtils.closeQuietly(inputStream);
+                CommonUtils.closeQuietly(outputStream);
+            }
+
+            // Create a PendingIntent and use it to generate the IntentSender
+            final Intent installIntent = new Intent(Constants.BROADCAST_ACTION_INSTALL);
+            final PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    this /*context*/,
+                    sessionId,
+                    installIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+
+            session.commit(pendingIntent.getIntentSender());
+            CommonUtils.closeQuietly(session);
+        } catch (IOException e) {
+            Log.e("Failure -> %s", e);
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void doSplitPackageStage(List<Uri> uriList) {
+        final PackageManager packageManager = getPackageManager();
+        final PackageInstaller packageInstaller = packageManager.getPackageInstaller();
+
+        try {
+            final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            final int sessionId = packageInstaller.createSession(params);
+            final PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+
+            for (Uri uri : uriList) {
+                final File file = new File(uri.getPath());
+                final InputStream inputStream = new FileInputStream(file);
+                final OutputStream outputStream = session.openWrite(file.getName(), 0, file.length());
+                IOUtils.copy(inputStream, outputStream);
+                session.fsync(outputStream);
+                CommonUtils.closeQuietly(inputStream);
+                CommonUtils.closeQuietly(outputStream);
+            }
+
+            final Intent installIntent = new Intent(Constants.BROADCAST_ACTION_INSTALL);
+            final PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    sessionId,
+                    installIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+
+            session.commit(pendingIntent.getIntentSender());
+            CommonUtils.closeQuietly(session);
+        } catch (IOException e) {
+            Log.e("Failure -> %s", e);
+            Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private boolean hasPrivilegedPermissionsImpl() {
+        boolean hasInstallPermission = getPackageManager()
+                .checkPermission(Manifest.permission.INSTALL_PACKAGES, getPackageName())
+                == PackageManager.PERMISSION_GRANTED;
+        boolean hasDeletePermission = getPackageManager()
+                .checkPermission(Manifest.permission.DELETE_PACKAGES, getPackageName())
+                == PackageManager.PERMISSION_GRANTED;
         return hasInstallPermission && hasDeletePermission;
     }
 
-    private void installPackageImpl(Uri packageURI, int flags, String installerPackageName,
-                                    final IPrivilegedCallback callback) {
+    private void installPackageImpl(Uri packageURI, int flags, String installerPackageName, final IPrivilegedCallback callback) {
+
         IPackageInstallObserver.Stub installObserver = new IPackageInstallObserver.Stub() {
             @Override
             public void packageInstalled(String packageName, int returnCode) {
                 try {
                     callback.handleResult(packageName, returnCode);
                 } catch (RemoteException e1) {
-                    Log.e(TAG, "RemoteException", e1);
+                    Log.e("RemoteException -> %s", e1);
                 }
             }
         };
 
         try {
-            installMethod.invoke(getPackageManager(), packageURI, installObserver,
-                    flags, installerPackageName);
+            installMethod.invoke(getPackageManager(), packageURI, installObserver, flags, installerPackageName);
         } catch (Exception e) {
-            Log.e(TAG, "Android not compatible!", e);
+            Log.e("Android not compatible! -> %s", e);
             try {
                 callback.handleResult(null, 0);
             } catch (RemoteException e1) {
-                Log.e(TAG, "RemoteException", e1);
+                Log.e("RemoteException -> %s", e1);
             }
         }
     }
 
     private void deletePackageImpl(String packageName, int flags, final IPrivilegedCallback callback) {
+
         if (isDeviceOwner(packageName)) {
-            Log.e(TAG, "Cannot delete " + packageName + ". This app is the device owner.");
+            Log.e("Cannot delete %s. This app is the device owner.", packageName);
             return;
         }
 
@@ -187,7 +311,7 @@ public class PrivilegedService extends Service {
                 try {
                     callback.handleResult(packageName, returnCode);
                 } catch (RemoteException e1) {
-                    Log.e(TAG, "RemoteException", e1);
+                    Log.e("RemoteException -> %s", e1);
                 }
             }
         };
@@ -196,139 +320,24 @@ public class PrivilegedService extends Service {
         try {
             deleteMethod.invoke(getPackageManager(), packageName, deleteObserver, flags);
         } catch (Exception e) {
-            Log.e(TAG, "Android not compatible!", e);
+            Log.e("Android not compatible! -> %s", e);
             try {
                 callback.handleResult(null, 0);
             } catch (RemoteException e1) {
-                Log.e(TAG, "RemoteException", e1);
+                Log.e("RemoteException -> %s", e1);
             }
         }
     }
 
-    @TargetApi(24)
-    private void doPackageStage(Uri packageURI) {
-        final PackageManager pm = getPackageManager();
-        final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        final PackageInstaller packageInstaller = pm.getPackageInstaller();
-        PackageInstaller.Session session = null;
-        try {
-            final int sessionId = packageInstaller.createSession(params);
-            final byte[] buffer = new byte[65536];
-            session = packageInstaller.openSession(sessionId);
-            final InputStream in = getContentResolver().openInputStream(packageURI);
-            final OutputStream out = session.openWrite("PackageInstaller", 0, -1 /* sizeBytes, unknown */);
-            try {
-                int c;
-                while ((c = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, c);
-                }
-                session.fsync(out);
-            } finally {
-                Utils.closeQuietly(in);
-                Utils.closeQuietly(out);
-            }
-            // Create a PendingIntent and use it to generate the IntentSender
-            Intent broadcastIntent = new Intent(BROADCAST_ACTION_INSTALL);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    this /*context*/,
-                    sessionId,
-                    broadcastIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
-            session.commit(pendingIntent.getIntentSender());
-        } catch (IOException e) {
-            Log.d(TAG, "Failure", e);
-            Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-        } finally {
-            Utils.closeQuietly(session);
-        }
-    }
-
-    private void doSplitPackageStage(List<Uri> uriList) {
-        final PackageManager packageManager = getPackageManager();
-        final PackageInstaller packageInstaller = packageManager.getPackageInstaller();
-        try {
-            final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
-                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-            final int sessionId = packageInstaller.createSession(params);
-            final PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-            for (Uri uri : uriList) {
-                final File file = new File(uri.getPath());
-                final InputStream inputStream = new FileInputStream(file);
-                final OutputStream outputStream = session.openWrite(file.getName(), 0, file.length());
-                IOUtils.copy(inputStream, outputStream);
-                session.fsync(outputStream);
-                Utils.closeQuietly(inputStream);
-                Utils.closeQuietly(outputStream);
-            }
-
-            Intent callbackIntent = new Intent(BROADCAST_ACTION_INSTALL);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    sessionId,
-                    callbackIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
-            session.commit(pendingIntent.getIntentSender());
-            Utils.closeQuietly(session);
-        } catch (IOException e) {
-            Log.d(TAG, "Failure", e);
-            Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        accessProtectionHelper = new AccessProtectionHelper(this);
-        try {
-            Class<?>[] installTypes = {
-                    Uri.class, IPackageInstallObserver.class, int.class,
-                    String.class,
-            };
-            Class<?>[] deleteTypes = {
-                    String.class, IPackageDeleteObserver.class,
-                    int.class,
-            };
-
-            PackageManager packageManager = getPackageManager();
-            installMethod = packageManager.getClass().getMethod("installPackage", installTypes);
-            deleteMethod = packageManager.getClass().getMethod("deletePackage", deleteTypes);
-        } catch (NoSuchMethodException e) {
-            Log.e(TAG, "Android not compatible!", e);
-            stopSelf();
-        }
-
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BROADCAST_ACTION_INSTALL);
-        registerReceiver(
-                broadcastReceiver, intentFilter, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
-        IntentFilter intentFilter2 = new IntentFilter();
-        intentFilter2.addAction(BROADCAST_ACTION_UNINSTALL);
-        registerReceiver(
-                broadcastReceiver, intentFilter2, BROADCAST_SENDER_PERMISSION, null /*scheduler*/);
-    }
-
-    /**
-     * Checks if an app is the current device owner.
-     *
-     * @param packageName to check
-     * @return true if it is the device owner app
-     */
     private boolean isDeviceOwner(String packageName) {
-
-        DevicePolicyManager manager =
-                (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        final Object object = getSystemService(Context.DEVICE_POLICY_SERVICE);
+        final DevicePolicyManager manager = (DevicePolicyManager) object;
         return manager.isDeviceOwnerApp(packageName);
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         unregisterReceiver(broadcastReceiver);
+        super.onDestroy();
     }
 }

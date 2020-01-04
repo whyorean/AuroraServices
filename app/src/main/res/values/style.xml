@@ -1,51 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme.Light" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="AppTheme" parent="@style/Theme.MaterialComponents.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
-        <item name="colorSurface">@color/colorSecondaryVariant</item>
-        <item name="android:strokeColor">@color/colorScrim</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
         <item name="android:windowBackground">@color/colorWindowBackground</item>
         <item name="android:navigationBarColor">@color/colorNavigation</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:colorBackground">@color/colorBackground</item>
-        <item name="toolbarStyle">@style/Aurora.MaterialComponents.Toolbar</item>
-        <item name="android:splitMotionEvents">false</item>
-        <item name="android:windowEnableSplitTouch">false</item>
+        <item name="colorPrimarySurface">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorBackground</item>
     </style>
-
-    <style name="Widget.Aurora" parent="@android:style/Widget" />
 
     <style name="TextAppearance.Aurora.Title" parent="TextAppearance.AppCompat.Medium">
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:maxLines">1</item>
+        <item name="android:letterSpacing">0.05</item>
         <item name="android:ellipsize">end</item>
-        <item name="android:letterSpacing">0.075</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:alpha">1</item>
+        <item name="android:fontFamily">@font/gilroy_extra_bold</item>
+        <item name="android:textColor">?android:attr/colorAccent</item>
     </style>
 
-    <style name="TextAppearance.Aurora.Toolbar.Title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
-        <item name="android:letterSpacing">0.050</item>
-        <item name="android:textColor">@color/colorWhite</item>
-    </style>
-
-    <style name="TextAppearance.Aurora.SubTitle" parent="@style/TextAppearance.Aurora.Title">
+    <style name="TextAppearance.Aurora.SubTitle" parent="TextAppearance.Aurora.Title">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">0.025</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
-    <!-- Toolbar & AppBar -->
-    <style name="AppTheme.PopupTheme" parent="ThemeOverlay.MaterialComponents.Light" />
+    <style name="TextAppearance.Aurora.Line1" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
 
-    <style name="AppTheme.PopupTheme.Dark" parent="ThemeOverlay.MaterialComponents.Dark" />
+    <style name="TextAppearance.Aurora.Line2" parent="TextAppearance.Aurora.Line1">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
 
-    <style name="Aurora.MaterialComponents.Toolbar" parent="Widget.MaterialComponents.Toolbar">
-        <item name="android:background">?android:attr/colorBackground</item>
-        <item name="titleTextAppearance">@style/TextAppearance.Aurora.Toolbar.Title</item>
-        <item name="popupTheme">@style/AppTheme.PopupTheme</item>
+    <style name="TextAppearance.Aurora.Line3" parent="TextAppearance.Aurora.Line2">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="Aurora.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="Aurora.BottomSheetDialog" parent="Theme.Design.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Aurora.BottomSheetDialogStyle</item>
     </style>
 </resources>

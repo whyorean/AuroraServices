@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.aurora.services;
+package com.aurora.services.utils;
 
 import java.io.Closeable;
 import java.io.IOException;
 
-public final class Utils {
+public final class CommonUtils {
+
 
     public static void closeQuietly(final Closeable closeable) {
         try {
             if (closeable != null) {
                 closeable.close();
             }
-        } catch (final IOException ioe) {
-            // ignore
+        } catch (final IOException ignored) {
         }
     }
 

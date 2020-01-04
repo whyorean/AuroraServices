@@ -1,37 +1,24 @@
 apply plugin: 'com.android.application'
 
-dependencies {
-    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.material:material:1.2.0-alpha03'
-
-    //Utils
-    implementation 'com.scottyab:rootbeer-lib:0.0.7'
-
-    //RX-Java2
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.14'
-
-    //ButterKnife
-    implementation 'com.jakewharton:butterknife:10.2.0'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.0'
-
-    implementation 'com.github.Chainfire:libsuperuser:-SNAPSHOT'
-}
-
 android {
     compileSdkVersion 29
 
     defaultConfig {
-        applicationId "com.aurora.services"
+        multiDexEnabled true
 
+        applicationId "com.aurora.services"
         minSdkVersion 21
         targetSdkVersion 29
-
         versionCode 5
         versionName "1.0.5"
 
         vectorDrawables.useSupportLibrary = true
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath false
+            }
+        }
     }
 
     compileOptions {
@@ -49,7 +36,52 @@ android {
     }
 
     lintOptions {
+        warning "MissingTranslation", "GetLocales", "VectorDrawableCompat"
         checkReleaseBuilds false
-        abortOnError true
+        abortOnError false
     }
 }
+
+
+buildscript {
+    ext {
+        versions = [
+                fastAdapter: "5.0.0",
+                okhttp3    : "4.3.1",
+                glide      : "4.11.0",
+                room       : "2.2.5",
+                lambok     : "1.18.10",
+                butterknife: "10.2.1",
+                fetch2     : "3.1.4"
+        ]
+    }
+}
+
+dependencies {
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+
+    //Extensions
+    implementation "com.mikepenz:fastadapter:5.0.0"
+    implementation "com.mikepenz:fastadapter-extensions-diff:5.0.0"
+    implementation "com.mikepenz:fastadapter-extensions-scroll:5.0.0"
+    implementation "com.mikepenz:fastadapter-extensions-ui:5.0.0"
+    implementation "com.mikepenz:fastadapter-extensions-utils:5.0.0"
+
+    //RX-Java2
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.16'
+
+    //Utils
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.apache.commons:commons-text:1.8'
+
+    //lombok
+    compileOnly 'org.projectlombok:lombok:1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+
+    //ButterKnife
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+}
+

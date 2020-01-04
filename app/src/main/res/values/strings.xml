@@ -2,22 +2,20 @@
 <resources>
 
     <string name="app_name">Aurora Services</string>
-    <string name="action_now">Yes</string>
-    <string name="action_later">Later</string>
-    <string name="action_convert">Convert</string>
-    <string name="action_remove_icon">Remove Icon</string>
+    <string name="app_desc">A privileged extension for Aurora Apps </string>
 
     <string name="perm_granted">Granted</string>
     <string name="perm_not_granted">Not Granted</string>
+    <string name="service_enabled">Enabled</string>
+    <string name="service_disabled">Disabled</string>
 
-    <string name="status_se">Service enabled</string>
-    <string name="status_pm">Permissions granted</string>
+    <string name="title_service">Service</string>
+    <string name="title_permission">Permissions</string>
+    <string name="title_whitelist">Whitelist</string>
+    <string name="subtitle_whitelist">Allowed apps</string>
+    <string name="title_whitelist_desc">Select apps that can access Aurora Services</string>
+    <string name="title_log">Install Log</string>
+    <string name="subtitle_log">Recent installs</string>
+    <string name="title_log_desc">Your recently installed apps</string>
 
-    <string name="system_status">Status</string>
-    <string name="system_summary">Aurora Services can be used to install apps in background via Aurora Store and Aurora-Droid"</string>
-    <string name="system_summary_err">Aurora Services must be a system app in order to get privileged permission to install and uninstall apps."</string>
-
-    <string name="dialog_title">Aurora Services</string>
-    <string name="dialog_msg">Do you wish to push Aurora Services to system apps ?</string>
-    <string name="remove_dialog_msg">Do you wish to remove Aurora Services icon from your launcher ?</string>
 </resources>

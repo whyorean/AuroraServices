@@ -16,37 +16,34 @@
 
 package com.aurora.services;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.os.Binder;
-import android.util.Log;
-import android.util.Pair;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.HashSet;
+import com.aurora.services.manager.WhitelistManager;
+import com.aurora.services.utils.Log;
 
+import lombok.Data;
+
+@Data
 public class AccessProtectionHelper {
 
     private PackageManager packageManager;
-    private HashSet<Pair<String, String>> whitelist;
+    private WhitelistManager whitelistManager;
 
     public AccessProtectionHelper(Context context) {
-        this(context, ClientWhitelist.whitelist);
-    }
-
-    public AccessProtectionHelper(Context context, HashSet<Pair<String, String>> whitelist) {
         this.packageManager = context.getPackageManager();
-        this.whitelist = whitelist;
+        this.whitelistManager = new WhitelistManager(context);
     }
 
+    public String getCallerPackageName() {
+        final int uid = Binder.getCallingUid();
+        final String[] callingPackages = packageManager.getPackagesForUid(uid);
+        if (callingPackages == null)
+            return "Unknown";
+        else
+            return callingPackages[0];
+    }
 
     public boolean isCallerAllowed() {
         return isUidAllowed(Binder.getCallingUid());
@@ -55,56 +52,22 @@ public class AccessProtectionHelper {
     private boolean isUidAllowed(int uid) {
         String[] callingPackages = packageManager.getPackagesForUid(uid);
         if (callingPackages == null) {
-            throw new RuntimeException("Should not happen. No packages associated to caller UID!");
+            throw new RuntimeException("No packages associated to caller UID!");
         }
+
         String currentPkg = callingPackages[0];
         return isPackageAllowed(currentPkg);
     }
 
     private boolean isPackageAllowed(String packageName) {
-        Log.d(PrivilegedService.TAG, "Checking if package is allowed to access privileged extension: " + packageName);
-        try {
-            byte[] currentPackageCert = getPackageCertificate(packageName);
+        Log.i("Checking if package is allowed to access Aurora Services: %s", packageName);
 
-            for (Pair whitelistEntry : whitelist) {
-                String whitelistPackageName = (String) whitelistEntry.first;
-                String whitelistHashString = (String) whitelistEntry.second;
-                byte[] whitelistHash = Utils.hexStringToByteArray(whitelistHashString);
-
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] packageHash = digest.digest(currentPackageCert);
-
-                String packageHashString = new BigInteger(1, packageHash).toString(16);
-                Log.d(PrivilegedService.TAG, "Allowed cert hash: " + whitelistHashString);
-                Log.d(PrivilegedService.TAG, "Package cert hash: " + packageHashString);
-
-                boolean packageNameMatches = packageName.equals(whitelistPackageName);
-                boolean packageCertMatches = Arrays.equals(whitelistHash, packageHash);
-                if (packageNameMatches && packageCertMatches) {
-                    Log.d(PrivilegedService.TAG, "Package is allowed to access the privileged extension!");
-                    return true;
-                }
-            }
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
-        Log.e(PrivilegedService.TAG, "Package is NOT allowed to access the privileged extension!");
-        return false;
-    }
-
-    private byte[] getPackageCertificate(String packageName) {
-        try {
-            @SuppressLint("PackageManagerGetSignatures")
-            PackageInfo pkgInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
-            Signature[] certificates = pkgInfo.signatures;
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            for (Signature cert : certificates) {
-                outputStream.write(cert.toByteArray());
-            }
-            return outputStream.toByteArray();
-        } catch (PackageManager.NameNotFoundException | IOException e) {
-            throw new RuntimeException(e.getMessage());
+        if (whitelistManager.isWhitelisted(packageName)) {
+            Log.i("Package is allowed to access Aurora Services");
+            return true;
+        } else {
+            Log.e("Package is NOT allowed to access Aurora Services");
+            return false;
         }
     }
 }

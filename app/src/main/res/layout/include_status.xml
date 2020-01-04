@@ -1,56 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="@dimen/margin_medium"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/text_enabled"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:drawableEnd="@drawable/ic_unavailable"
-        android:gravity="center_vertical"
-        android:paddingBottom="@dimen/spacing_normal"
-        android:text="@string/status_se"
-        android:textAppearance="@style/TextAppearance.Aurora.SubTitle"
-        android:textColor="?android:textColorPrimary" />
+        android:padding="@dimen/margin_small">
 
-    <TextView
-        android:id="@+id/text_permission"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_enabled"
-        android:drawableEnd="@drawable/ic_unavailable"
-        android:gravity="center_vertical"
-        android:paddingTop="@dimen/spacing_micro"
-        android:paddingBottom="@dimen/spacing_normal"
-        android:text="@string/status_pm"
-        android:textAppearance="@style/TextAppearance.Aurora.SubTitle"
-        android:textColor="?android:textColorPrimary" />
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_small"
+            app:cardCornerRadius="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/card_whitelist"
+            app:layout_constraintEnd_toStartOf="@+id/card_health"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-    <TextView
-        android:id="@+id/text_warning"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_permission"
-        android:layout_marginTop="@dimen/margin_medium"
-        android:background="@drawable/warning_bg"
-        android:padding="@dimen/margin_small"
-        android:text="@string/system_summary_err"
-        android:textColor="@color/colorGrey"
-        android:textSize="12sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_normal">
 
-    <Button
-        android:id="@+id/btn_convert"
-        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_warning"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/margin_normal"
-        android:layout_marginBottom="@dimen/margin_small"
-        android:enabled="false"
-        android:text="@string/action_convert" />
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="@dimen/icon_size_category"
+                    android:layout_height="@dimen/icon_size_category"
+                    android:tint="?android:attr/colorAccent"
+                    app:srcCompat="@drawable/ic_service" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:text="@string/title_service"
+                    android:textAppearance="@style/TextAppearance.Aurora.SubTitle" />
+
+                <TextView
+                    android:id="@+id/txt_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Aurora.Line2"
+                    tools:text="Enabled" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_health"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_small"
+            app:cardCornerRadius="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/card_log"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/card_status"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_normal">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="@dimen/icon_size_category"
+                    android:layout_height="@dimen/icon_size_category"
+                    android:tint="?android:attr/colorAccent"
+                    app:srcCompat="@drawable/ic_permission" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:text="@string/title_permission"
+                    android:textAppearance="@style/TextAppearance.Aurora.SubTitle" />
+
+                <TextView
+                    android:id="@+id/txt_permission"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Aurora.Line2"
+                    tools:text="Good" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_whitelist"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_small"
+            app:cardCornerRadius="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/card_log"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/card_status">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_normal">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="@dimen/icon_size_category"
+                    android:layout_height="@dimen/icon_size_category"
+                    android:tint="?android:attr/colorAccent"
+                    app:srcCompat="@drawable/ic_apps" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:text="@string/title_whitelist"
+                    android:textAppearance="@style/TextAppearance.Aurora.SubTitle" />
+
+                <TextView
+                    android:id="@+id/txt_whitelist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/subtitle_whitelist"
+                    android:textAppearance="@style/TextAppearance.Aurora.Line2" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_log"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_small"
+            app:cardCornerRadius="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/card_whitelist"
+            app:layout_constraintTop_toBottomOf="@id/card_health">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_normal">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="@dimen/icon_size_category"
+                    android:layout_height="@dimen/icon_size_category"
+                    android:tint="?android:attr/colorAccent"
+                    app:srcCompat="@drawable/ic_log" />
+
+                <TextView
+                    android:id="@+id/txt_log"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:text="@string/title_log"
+                    android:textAppearance="@style/TextAppearance.Aurora.SubTitle" />
+
+                <TextView
+                    android:id="@+id/txt_log_desc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/subtitle_log"
+                    android:textAppearance="@style/TextAppearance.Aurora.Line2" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </RelativeLayout>

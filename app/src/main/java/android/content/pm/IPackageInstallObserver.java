@@ -27,6 +27,8 @@ import android.os.RemoteException;
  */
 public interface IPackageInstallObserver extends IInterface {
 
+    void packageInstalled(String packageName, int returnCode) throws RemoteException;
+
     abstract class Stub extends Binder implements android.content.pm.IPackageInstallObserver {
 
         public Stub() {
@@ -46,6 +48,4 @@ public interface IPackageInstallObserver extends IInterface {
             throw new RuntimeException("Stub!");
         }
     }
-
-    void packageInstalled(String packageName, int returnCode) throws RemoteException;
 }

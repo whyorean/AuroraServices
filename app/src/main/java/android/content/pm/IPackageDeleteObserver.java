@@ -27,6 +27,8 @@ import android.os.RemoteException;
  */
 public interface IPackageDeleteObserver extends IInterface {
 
+    void packageDeleted(java.lang.String packageName, int returnCode) throws RemoteException;
+
     abstract class Stub extends Binder implements android.content.pm.IPackageDeleteObserver {
 
         public Stub() {
@@ -46,6 +48,4 @@ public interface IPackageDeleteObserver extends IInterface {
             throw new RuntimeException("Stub!");
         }
     }
-
-    void packageDeleted(java.lang.String packageName, int returnCode) throws RemoteException;
 }
