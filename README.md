@@ -16,9 +16,6 @@ Aurora Services is currently in developement, but all features listed here work 
 * Background app installation
   -- With the services method selected in Aurora Store / Droid, applications automatically install in the background without any user input.
 
-* Lightweight / Bloat free
-  -- The only installation requirements are root access and read / write permissions.
-
 # Installation
 
 1. Install Aurora Services as a system app.
@@ -32,15 +29,16 @@ Aurora Services is currently in developement, but all features listed here work 
 
 # Screenshot
 
-<img src="https://i.imgur.com/kBxIfzR.jpg" width="300">
+<img src="https://i.imgur.com/W7fSBhr.png" height="400"><img src="https://i.imgur.com/Y3gcVtS.png" height="400">
 
 # Links
 
+* Magisk Module - [Github](https://github.com/whyorean/AuroraServices-Magisk)
 * Support Group - [Telegram](https://t.me/AuroraDroid)
 
 # Aurora Services uses the following Open Source libraries:
 
 * [RX-Java](https://github.com/ReactiveX/RxJava)
 * [ButterKnife](https://github.com/JakeWharton/butterknife)
-* [RootBeer](https://github.com/scottyab/rootbeer)
-* [libSuperUser](https://github.com/Chainfire/libsuperuser)
+* [Lombok](https://projectlombok.org/)
+* [FastAdapter](https://github.com/mikepenz/FastAdapter)
