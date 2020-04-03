@@ -22,6 +22,5 @@
 -keep class android.content.pm.IPackageInstallObserver$Stub { *; }
 -keep public class com.dragons.aurora.InstallerPrivileged$* { *; }
 
--optimizationpasses 5
 -renamesourcefileattribute SourceFile
 -repackageclasses

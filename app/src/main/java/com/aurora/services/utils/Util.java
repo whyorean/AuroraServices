@@ -1,16 +1,13 @@
 package com.aurora.services.utils;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.os.Build;
 
 import com.aurora.services.Constants;
-import com.aurora.services.PrivilegedService;
 import com.aurora.services.model.App;
 
 import org.apache.commons.lang3.StringUtils;
@@ -86,21 +83,8 @@ public class Util {
             app.setInstaller(installer != null ? installer : "unknown");
             app.setInstalledTime(packageInfo.firstInstallTime);
             app.setInstallLocation(packageInfo.applicationInfo.sourceDir);
-            app.setLastUpdated(packageInfo.lastUpdateTime);
             app.setVersionName(packageInfo.versionName);
             app.setVersionCode((long) packageInfo.versionCode);
-
-            final String description = String.valueOf(applicationInfo.loadDescription(packageManager));
-            app.setDescription(description);
-            app.setTargetSDK(applicationInfo.targetSdkVersion);
-
-            if (packageInfo.splitNames != null && packageInfo.splitNames.length > 0)
-                app.setSplit(true);
-            if ((packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
-                app.setSystem(true);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                app.setCategory(getCategoryString(packageInfo.applicationInfo.category));
-            }
             return app;
         } catch (PackageManager.NameNotFoundException e) {
             return null;
@@ -129,14 +113,6 @@ public class Util {
                 return "Undefined";
             default:
                 return "Unknown";
-        }
-    }
-
-    public static void restartService(Context context) {
-        try {
-            context.startService(new Intent(context, PrivilegedService.class));
-        } catch (IllegalStateException e) {
-            Log.e(e.getMessage());
         }
     }
 }
